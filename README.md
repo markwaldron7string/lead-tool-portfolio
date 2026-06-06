@@ -28,7 +28,7 @@
 
 ## What It Does
 
-The client sells services to buyers agents and needed a way to find and contact every buyers agent business in Australia. Previously this was done manually through Google Maps — hours of searching, copying, and pasting into spreadsheets.
+The client sells services to buyers agents and needed a way to find and contact buyers agents in Australia. Previously this was done manually through Google Maps — hours of searching, copying, and pasting into spreadsheets.
 
 This tool automates the entire pipeline:
 
