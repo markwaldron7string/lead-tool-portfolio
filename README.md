@@ -3,10 +3,9 @@
 # 🏠 Buyers Agent Lead Scraper
 
 > A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand — built for a real client in the Australian property industry.
-> The live demo runs on generated sample data; scraping and enrichment are disabled. The production version is private."
 
 **[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
-
+> **Note:** This is the public portfolio version. It runs on generated sample data, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
 ---
 
 ![Lead Scraper Dashboard](/public/dashboard.png)
