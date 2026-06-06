@@ -9,7 +9,9 @@
 > A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand — built for a real client in the Australian property industry.
 
 **[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
+
 > **Note:** This is the public portfolio version. It runs on generated sample data, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
+
 ---
 
 ![Lead Scraper Dashboard](/public/dashboard.png)
@@ -32,7 +34,7 @@
 
 ## What It Does
 
-The client sells services to buyers agents and needed a way to find and contact buyers agents in Australia. Previously this was done manually through Google Maps — hours of searching, copying, and pasting into spreadsheets.
+The client sells services to buyers agents and needed a way to find and contact every buyers agent business in Australia. Previously this was done manually through Google Maps — hours of searching, copying, and pasting into spreadsheets.
 
 This tool automates the entire pipeline:
 
@@ -149,7 +151,7 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 
 **Enrichment lockdown** — export, scraping, and CSV upload all disable during bulk enrichment to prevent data integrity issues.
 
-**Password protection** — cookie-based auth (30-day expiry) via a login page and API route. Keeps the tool private without requiring user accounts.
+**Password protection** — cookie-based auth (30-day expiry) via a login page and API route. Keeps the tool private without requiring user accounts. *(Production only — bypassed in demo mode.)*
 
 ---
 
@@ -157,12 +159,12 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 
 | Variable | Description |
 |---|---|
-| `OPENAI_API_KEY` | OpenAI — gpt-4o-mini enrichment + gpt-4o deep research |
-| `GOOGLE_PLACES_KEY` | Google Places API — live scraping |
-| `ABN_GUID` | Australian Business Register — free, register at abr.business.gov.au |
-| `NZBN_API_KEY` | NZ Companies Office — free, register at api.business.govt.nz |
-| `SITE_PASSWORD` | Dashboard access password |
-| `NEXT_PUBLIC_DEMO_MODE` | Set to `true` to disable enrichment/scraping for portfolio demo |
+| `NEXT_PUBLIC_DEMO_MODE` | Set to `true` to run in demo mode (disables scraping, enrichment, and auth gate) |
+| `OPENAI_API_KEY` | OpenAI — gpt-4o-mini enrichment + gpt-4o deep research *(not needed in demo mode)* |
+| `GOOGLE_PLACES_KEY` | Google Places API — live scraping *(not needed in demo mode)* |
+| `ABN_GUID` | Australian Business Register — free, register at abr.business.gov.au *(not needed in demo mode)* |
+| `NZBN_API_KEY` | NZ Companies Office — free, register at api.business.govt.nz *(not needed in demo mode)* |
+| `SITE_PASSWORD` | Dashboard access password *(not needed in demo mode)* |
 
 ---
 
@@ -172,13 +174,12 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 git clone https://github.com/markwaldron7string/lead-tool-portfolio
 cd lead-tool-portfolio
 npm install
-# Add environment variables to .env.local
-npm run dev
+NEXT_PUBLIC_DEMO_MODE=true npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000)
 
-> **Note:** Run enrichment on localhost:3000, not the Vercel deployment. Vercel serverless functions have a 10-second timeout which interrupts long enrichment runs.
+> **Note:** `NEXT_PUBLIC_DEMO_MODE=true` loads the sample dataset and disables scraping, enrichment, and the auth gate. Omit it (and supply real API keys in `.env.local`) to run the full production version locally.
 
 ---
 
