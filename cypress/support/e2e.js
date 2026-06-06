@@ -7,15 +7,8 @@ const paidApiRoutes = [
 ];
 
 Cypress.Commands.add('login', () => {
-  const password = Cypress.env('SITE_PASSWORD');
-
-  expect(password, 'Cypress.env("SITE_PASSWORD")').to.be.a('string').and.not.be.empty;
-
-  cy.request({
-    method: 'POST',
-    url: '/api/auth',
-    body: { password },
-  });
+  // No auth gate in this version — pages load directly. No-op for compatibility.
+  cy.log('No auth gate — login is a no-op');
 });
 
 Cypress.Commands.add('blockUnmockedPaidApis', () => {

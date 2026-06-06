@@ -1,29 +1,24 @@
-describe('mocked scraping flow', () => {
+describe('scrape panel in demo mode', () => {
   beforeEach(() => {
     cy.blockUnmockedPaidApis();
-    cy.mockLeadCsv('/leads_au.csv', 'leads-empty.csv');
-    cy.mockScrapeResponse('scrape-au.json');
+    cy.mockLeadCsv('/leads_au.csv', 'leads-au-single.csv');
   });
 
-  it('adds mocked scrape results without hitting Google Places', () => {
-    cy.login();
+  it('shows the scrape panel but scraping is disabled in demo mode', () => {
     cy.visit('/au');
 
-    cy.get('[data-cy="empty-leads-message"]').should('contain', 'No leads yet');
-    cy.get('[data-cy="scrape-button"]').click();
+    // Scrape panel header is always visible on the leads dashboard
+    cy.get('[data-cy="scrape-panel"]').should('be.visible');
 
-    cy.wait('@scrape').its('request.body').should((body) => {
-      expect(body).to.include({
-        searchTerm: 'buyers agent',
-        country: 'AU',
-      });
-      expect(body.city).to.be.a('string').and.not.be.empty;
-    });
+    // Panel can be toggled open to reveal its controls
+    cy.get('[data-cy="scrape-panel-toggle"]').click();
+    cy.get('[data-cy="search-term-select"]').should('be.visible');
+    cy.get('[data-cy="area-select"]').should('be.visible');
+    cy.get('[data-cy="all-areas-button"]').should('be.visible');
 
-    cy.get('[data-cy="leads-page-title"]').should('contain', 'Australia');
-    cy.get('[data-cy="leads-table"]').should('contain', 'Cypress Buyers Agency');
-    cy.get('[data-cy="lead-row"]')
-      .should('contain', 'Cypress Buyers Agency')
-      .and('contain', '+61 2 5550 0199');
+    // In demo mode the scrape and run-all-terms buttons are wrapped in
+    // DemoDisabled — they render without data-cy and are not clickable
+    cy.get('[data-cy="scrape-button"]').should('not.exist');
+    cy.get('[data-cy="run-all-terms-button"]').should('not.exist');
   });
 });

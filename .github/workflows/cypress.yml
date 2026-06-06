@@ -23,5 +23,6 @@ jobs:
           wait-on: 'http://localhost:3000'
           wait-on-timeout: 120
         env:
+          NEXT_PUBLIC_DEMO_MODE: 'true'
           CYPRESS_SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
           SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
