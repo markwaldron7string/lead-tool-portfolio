@@ -294,7 +294,7 @@ function SocialLink({ url, type }) {
     const p = u.pathname.split("/").filter(Boolean);
     label = p[p.length - 1] || u.hostname;
   } catch {}
-  const colors = { linkedin: "#0a66c2", instagram: "#e1306c", facebook: "#1877f2" };
+  const colors = { linkedin: "var(--linkedin-color)", instagram: "var(--instagram-color)", facebook: "#1877f2" };
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
       style={{ color: colors[type] || "var(--blue)", textDecoration: "none", fontSize: 12 }}
@@ -1281,7 +1281,7 @@ export default function LeadsPage({
               {leads.length > 0 && (
                 <button onClick={() => { setHideExcluded((h) => !h); setPage(1); }}
                   style={{ background: hideExcluded ? "var(--surface2)" : "transparent", border: `1px solid ${hideExcluded ? "var(--border2)" : "var(--border)"}`, color: hideExcluded ? "var(--text)" : "var(--muted)", borderRadius: 6, padding: "9px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-                  {hideExcluded ? "✓ Hide excluded" : "Show excluded"}
+                  {hideExcluded ? "Excluded: Hidden" : "Excluded: Shown"}
                 </button>
               )}
               {hasActiveFilters && (
@@ -1479,7 +1479,7 @@ export default function LeadsPage({
                             if (key === "website") return (
                               <td key={key}>
                                 {lead.website
-                                  ? <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--blue)", textDecoration: "none", fontSize: 12 }}>
+                                  ? <a href={lead.website.startsWith("http") ? lead.website : `https://${lead.website}`} target="_blank" rel="noopener noreferrer" style={{ color: "var(--website-color)", textDecoration: "none", fontSize: 12 }}>
                                       {lead.website.replace(/^https?:\/\/(www\.)?/, "").split("/")[0]}
                                     </a>
                                   : "---"}
@@ -1499,7 +1499,15 @@ export default function LeadsPage({
                             if (key === "instagram") return <td key={key}><SocialLink url={lead.instagram} type="instagram" /></td>;
                             if (key === "abn") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11, whiteSpace: "nowrap" }}>{lead.abn || <span style={{ color: "var(--muted)" }}>---</span>}</td>;
                             if (key === "entity_type") return <td key={key} style={{ fontSize: 11 }}>{lead.entity_type || <span style={{ color: "var(--muted)" }}>---</span>}</td>;
-                            if (key === "totalScore" || key === "reviewsCount") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{lead[key] || "---"}</td>;
+                            if (key === "totalScore") {
+                              const r = lead[key] ? parseFloat(lead[key]) : null;
+                              const ratingColor = (theme === "dark" && r !== null)
+                                ? (r >= 4 ? "var(--green)" : r >= 3 ? "var(--instagram-color)" : "#f08080")
+                                : undefined;
+                              return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: ratingColor }}>{lead[key] || "---"}</td>;
+                            }
+                            if (key === "reviewsCount") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{lead[key] || "---"}</td>;
+                            if (key === "city" || key === "state") return <td key={key} style={{ color: "var(--city-color)" }}>{lead[key] || "---"}</td>;
                             return <td key={key}>{lead[key] || "---"}</td>;
                           })}
 

@@ -6,9 +6,9 @@
 :root {
   --bg:        #0e0e10;
   --surface:   #262629;
-  --surface2:  #323236;
-  --border:    rgba(255,255,255,0.10);
-  --border2:   rgba(255,255,255,0.17);
+  --surface2:  #000000;
+  --border:    rgba(255, 255, 255, 0.161);
+  --border2:   rgba(199, 180, 180, 0.489);
   --text:      #efefef;
   --muted:     #bdbdc7;
   --green:     #3ecf8e;
@@ -16,9 +16,13 @@
   --red:       #e05252;
   --blue:      #4c9cf1;
   --purple:    #a78bfa;
-  --font-sans:    system-ui, -apple-system, sans-serif;
-  --font-mono:    ui-monospace, 'SF Mono', monospace;
-  --email-color:  var(--green);
+  --font-sans:       system-ui, -apple-system, sans-serif;
+  --font-mono:       ui-monospace, 'SF Mono', monospace;
+  --email-color:     var(--green);
+  --linkedin-color:  #a9d1ffe5;
+  --website-color:   #ffffff;
+  --instagram-color: #f0b060;
+  --city-color:      #d9daf8;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -227,8 +231,12 @@ html[data-theme="light"] {
   --green:        #3ecf8e;
   --amber:        #a86200;
   --red:          #be2e2e;
-  --blue:         #1860b0;
-  --email-color:  var(--text);
+  --blue:            #1860b0;
+  --email-color:     var(--color-green-700);
+  --linkedin-color:  #0a66c2;
+  --website-color:   black;
+  --instagram-color: #6d28d9;
+  --city-color:      #1425be;
 }
 
 html[data-theme="light"] body {
