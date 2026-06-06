@@ -76,8 +76,9 @@ function LoginForm() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        justifyContent: 'center',
-        padding: '24px',
+        justifyContent: 'flex-start',
+        padding: '18vh 24px 40px',
+        boxSizing: 'border-box',
       }}
     >
       {/* Monospace title */}

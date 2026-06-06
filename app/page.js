@@ -85,8 +85,9 @@ export default function HomePage() {
         display: "flex",
         flexDirection: "column",
         alignItems: "center",
-        justifyContent: "center",
-        padding: "40px 24px",
+        justifyContent: "flex-start",
+        padding: "18vh 24px 40px",
+        boxSizing: "border-box",
         position: "relative",
       }}
     >
