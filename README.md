@@ -183,6 +183,13 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
+## CI/CD
+
+- **CI** — GitHub Actions runs the Jest unit suite and the Cypress E2E suite (with `NEXT_PUBLIC_DEMO_MODE=true`) on every push and pull request (see the badges above).
+- **CD** — Deployment is handled automatically by Vercel with `NEXT_PUBLIC_DEMO_MODE=true` set as a project environment variable. The production version of this tool — with the real client dataset and live API integrations — is maintained in a private repository.
+
+---
+
 ## Cost Summary
 
 | Service | Cost | Free tier |
