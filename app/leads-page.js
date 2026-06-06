@@ -248,8 +248,8 @@ function SunIcon() {
 
 function MoonIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
     </svg>
   );
 }
@@ -560,6 +560,15 @@ export default function LeadsPage({
   const [tableCanScrollLeft, setTableCanScrollLeft] = useState(false);
   const [tableCanScrollRight, setTableCanScrollRight] = useState(false);
   const isMobile = useIsMobile();
+  const defaultVisibleColKeys = useMemo(
+    () => new Set(getDefaultCols(regionLabel, businessIdLabel).filter((c) => c.visible).map((c) => c.key)),
+    [regionLabel, businessIdLabel]
+  );
+  const hasAdditionalVisibleCols = useMemo(
+    () => cols.some((col) => col.visible && !defaultVisibleColKeys.has(col.key)),
+    [cols, defaultVisibleColKeys]
+  );
+  const tableScrollControlsEnabled = !isMobile && hasAdditionalVisibleCols && (tableCanScrollLeft || tableCanScrollRight);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
@@ -865,12 +874,12 @@ export default function LeadsPage({
     function onUp() {
       if (!tableDragRef.current.active) return;
       tableDragRef.current.active = false;
-      if (theadRef.current) theadRef.current.style.cursor = "grab";
+      if (theadRef.current) theadRef.current.style.cursor = tableScrollControlsEnabled ? "grab" : "default";
     }
     document.addEventListener("mousemove", onMove);
     document.addEventListener("mouseup", onUp);
     return () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
-  }, []);
+  }, [tableScrollControlsEnabled]);
 
   // ── Deep research ─────────────────────────────────────────────────────────
 
@@ -1336,55 +1345,6 @@ export default function LeadsPage({
               )}
               <input ref={fileInputRef} type="file" accept=".csv" multiple disabled={DEMO_MODE || bulkRunning} style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
 
-              {/* Table scroll arrows — appear when table overflows horizontally */}
-              {!isMobile && (tableCanScrollLeft || tableCanScrollRight) && (
-                <div style={{ display: "flex", gap: 3, flexShrink: 0, marginLeft: "auto" }}>
-                  <button
-                    onClick={() => scrollTableBy(-320)}
-                    disabled={!tableCanScrollLeft}
-                    aria-label="Scroll table left"
-                    style={{
-                      width: 32, height: 32,
-                      background: "var(--surface2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                      color: tableCanScrollLeft ? "var(--text)" : "var(--border2)",
-                      cursor: tableCanScrollLeft ? "pointer" : "default",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      opacity: tableCanScrollLeft ? 1 : 0.3,
-                      flexShrink: 0, transition: "opacity 0.15s",
-                    }}
-                    onMouseOver={(e) => { if (tableCanScrollLeft) e.currentTarget.style.borderColor = "var(--border2)"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="15 18 9 12 15 6"/>
-                    </svg>
-                  </button>
-                  <button
-                    onClick={() => scrollTableBy(320)}
-                    disabled={!tableCanScrollRight}
-                    aria-label="Scroll table right"
-                    style={{
-                      width: 32, height: 32,
-                      background: "var(--surface2)",
-                      border: "1px solid var(--border)",
-                      borderRadius: 6,
-                      color: tableCanScrollRight ? "var(--text)" : "var(--border2)",
-                      cursor: tableCanScrollRight ? "pointer" : "default",
-                      display: "flex", alignItems: "center", justifyContent: "center",
-                      opacity: tableCanScrollRight ? 1 : 0.3,
-                      flexShrink: 0, transition: "opacity 0.15s",
-                    }}
-                    onMouseOver={(e) => { if (tableCanScrollRight) e.currentTarget.style.borderColor = "var(--border2)"; }}
-                    onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6"/>
-                    </svg>
-                  </button>
-                </div>
-              )}
             </div>
 
             {/* Advanced filters */}
@@ -1438,6 +1398,24 @@ export default function LeadsPage({
               </div>
             )}
 
+            {/* Table scroll arrows — bare arrows, right-aligned above table */}
+            {tableScrollControlsEnabled && (
+              <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 5 }}>
+                {tableCanScrollLeft && (
+                  <svg onClick={() => scrollTableBy(-320)} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ cursor: "pointer", color: "var(--muted)", display: "block" }} aria-label="Scroll table left">
+                    <polyline points="15 18 9 12 15 6"/>
+                  </svg>
+                )}
+                {tableCanScrollRight && (
+                  <svg onClick={() => scrollTableBy(320)} width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                    style={{ cursor: "pointer", color: "var(--muted)", display: "block" }} aria-label="Scroll table right">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                )}
+              </div>
+            )}
+
             {/* Table */}
             <div ref={leadsTableRef} style={{ border: "1px solid var(--border)", borderRadius: 10, overflow: "hidden", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
               <table data-cy="leads-table" style={{ tableLayout: "fixed", minWidth: isMobile ? 400 : visibleCols.reduce((s, c) => s + c.width, 0) + 60 }}>
@@ -1447,8 +1425,9 @@ export default function LeadsPage({
                 </colgroup>
                 <thead
                   ref={theadRef}
-                  style={{ cursor: "grab", userSelect: "none" }}
+                  style={{ cursor: tableScrollControlsEnabled ? "grab" : "default", userSelect: "none" }}
                   onMouseDown={(e) => {
+                    if (!tableScrollControlsEnabled) return;
                     if (e.target.closest(".resize-handle")) return;
                     const el = leadsTableRef.current;
                     if (!el) return;
@@ -1457,7 +1436,7 @@ export default function LeadsPage({
                 >
                   <tr>
                     {visibleCols.map((col) => (
-                      <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: "inherit", userSelect: "none", position: "relative", overflow: "visible" }}>
+                      <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: tableScrollControlsEnabled ? "inherit" : "pointer", userSelect: "none", position: "relative", overflow: "visible" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                           {col.label}
                           {sortCol === col.key ? <span style={{ opacity: 0.7 }}>{sortDir === 1 ? "↑" : "↓"}</span> : <span style={{ opacity: 0.2 }}>↕</span>}

@@ -202,7 +202,7 @@ function LoginForm() {
 
 // useSearchParams must be wrapped in Suspense in Next.js App Router
 export default function LoginPage() {
-  if (process.env.NEXT_PUBLIC_DEMO_MODE === 'true') {
+  if (process.env.NEXT_PUBLIC_DEMO_MODE !== 'false') {
     redirect('/');
   }
   return (

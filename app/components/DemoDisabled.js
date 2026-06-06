@@ -1,8 +1,9 @@
 "use client";
 import { useState } from "react";
 
-// Inlined at build time by Next.js — safe to use at module level.
-export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+// The portfolio is public/demo by default. Set NEXT_PUBLIC_DEMO_MODE=false
+// only when intentionally testing write/API flows locally.
+export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
 
 /**
  * Wraps any button in a non-interactive shell with a styled

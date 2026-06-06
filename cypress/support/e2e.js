@@ -6,11 +6,6 @@ const paidApiRoutes = [
   '/api/nzbn',
 ];
 
-Cypress.Commands.add('login', () => {
-  // No auth gate in this version — pages load directly. No-op for compatibility.
-  cy.log('No auth gate — login is a no-op');
-});
-
 Cypress.Commands.add('blockUnmockedPaidApis', () => {
   paidApiRoutes.forEach((route) => {
     cy.intercept('POST', route, (req) => {
