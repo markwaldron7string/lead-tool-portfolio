@@ -228,6 +228,32 @@ function ScoreInfoTooltip({ onFilter, theme }) {
   );
 }
 
+// ── Theme icons ───────────────────────────────────────────────────────────────
+
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+    </svg>
+  );
+}
+
 // ── Small components ──────────────────────────────────────────────────────────
 
 function StatCard({ label, value, color, subtitle }) {
@@ -529,6 +555,10 @@ export default function LeadsPage({
   const cancelRef = useRef(false);
   const fileInputRef = useRef(null);
   const leadsTableRef = useRef(null);
+  const theadRef = useRef(null);
+  const tableDragRef = useRef({ active: false, startX: 0, startScrollLeft: 0, moved: false });
+  const [tableCanScrollLeft, setTableCanScrollLeft] = useState(false);
+  const [tableCanScrollRight, setTableCanScrollRight] = useState(false);
   const isMobile = useIsMobile();
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
@@ -795,6 +825,53 @@ export default function LeadsPage({
     setEnriching({});
   };
 
+  // ── Table scroll / drag ───────────────────────────────────────────────────
+
+  const updateTableScroll = useCallback(() => {
+    const el = leadsTableRef.current;
+    if (!el) return;
+    setTableCanScrollLeft(el.scrollLeft > 2);
+    setTableCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
+  }, []);
+
+  // Re-attach scroll listener whenever the table appears (viewMode / leads change)
+  const tableVisible = viewMode === "leads" && leads.length > 0;
+  useEffect(() => {
+    if (!tableVisible) return;
+    const el = leadsTableRef.current;
+    if (!el) return;
+    el.addEventListener("scroll", updateTableScroll, { passive: true });
+    const ro = new ResizeObserver(updateTableScroll);
+    ro.observe(el);
+    updateTableScroll();
+    return () => { el.removeEventListener("scroll", updateTableScroll); ro.disconnect(); };
+  }, [tableVisible, cols, updateTableScroll]);
+
+  const scrollTableBy = useCallback((delta) => {
+    leadsTableRef.current?.scrollBy({ left: delta, behavior: "smooth" });
+  }, []);
+
+  // Global mouse handlers for thead drag-to-scroll
+  useEffect(() => {
+    function onMove(e) {
+      if (!tableDragRef.current.active) return;
+      const dx = e.clientX - tableDragRef.current.startX;
+      if (Math.abs(dx) > 4) {
+        tableDragRef.current.moved = true;
+        if (theadRef.current) theadRef.current.style.cursor = "grabbing";
+        if (leadsTableRef.current) leadsTableRef.current.scrollLeft = tableDragRef.current.startScrollLeft - dx;
+      }
+    }
+    function onUp() {
+      if (!tableDragRef.current.active) return;
+      tableDragRef.current.active = false;
+      if (theadRef.current) theadRef.current.style.cursor = "grab";
+    }
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+    return () => { document.removeEventListener("mousemove", onMove); document.removeEventListener("mouseup", onUp); };
+  }, []);
+
   // ── Deep research ─────────────────────────────────────────────────────────
 
   const researchOne = useCallback(async (lead) => {
@@ -885,6 +962,7 @@ export default function LeadsPage({
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const handleSort = (key) => {
+    if (tableDragRef.current.moved) { tableDragRef.current.moved = false; return; }
     if (sortCol === key) setSortDir((d) => d * -1);
     else { setSortCol(key); setSortDir(key === "_score" ? -1 : 1); }
     setPage(1);
@@ -920,7 +998,7 @@ export default function LeadsPage({
       <div style={{ height: "100vh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 16, color: "var(--muted)", position: "relative" }}>
         <button onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
           style={{ position: "absolute", top: 16, right: 16, background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "7px 11px", fontSize: 15, cursor: "pointer", lineHeight: 1 }}>
-          {theme === "dark" ? "☀" : "🌙"}
+          {theme === "dark" ? <SunIcon /> : <MoonIcon />}
         </button>
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style={{ color: "var(--green)", animation: "spin 1s linear infinite" }}>
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" strokeDasharray="28 16" />
@@ -953,7 +1031,7 @@ export default function LeadsPage({
               </Link>
               <button onClick={toggleTheme}
                 style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: "7px 11px", fontSize: 15, cursor: "pointer", lineHeight: 1 }}>
-                {theme === "dark" ? "☀" : "🌙"}
+                {theme === "dark" ? <SunIcon /> : <MoonIcon />}
               </button>
             </div>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
@@ -1044,7 +1122,7 @@ export default function LeadsPage({
             </button>
             <button onClick={toggleTheme} title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
               style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--text)", borderRadius: 8, padding: isMobile ? "7px 10px" : "8px 11px", fontSize: 15, cursor: "pointer", lineHeight: 1, flexShrink: 0 }}>
-              {theme === "dark" ? "☀" : "🌙"}
+              {theme === "dark" ? <SunIcon /> : <MoonIcon />}
             </button>
           </div>
         </header>
@@ -1257,6 +1335,56 @@ export default function LeadsPage({
                 </button>
               )}
               <input ref={fileInputRef} type="file" accept=".csv" multiple disabled={DEMO_MODE || bulkRunning} style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+
+              {/* Table scroll arrows — appear when table overflows horizontally */}
+              {!isMobile && (tableCanScrollLeft || tableCanScrollRight) && (
+                <div style={{ display: "flex", gap: 3, flexShrink: 0, marginLeft: "auto" }}>
+                  <button
+                    onClick={() => scrollTableBy(-320)}
+                    disabled={!tableCanScrollLeft}
+                    aria-label="Scroll table left"
+                    style={{
+                      width: 32, height: 32,
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      color: tableCanScrollLeft ? "var(--text)" : "var(--border2)",
+                      cursor: tableCanScrollLeft ? "pointer" : "default",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      opacity: tableCanScrollLeft ? 1 : 0.3,
+                      flexShrink: 0, transition: "opacity 0.15s",
+                    }}
+                    onMouseOver={(e) => { if (tableCanScrollLeft) e.currentTarget.style.borderColor = "var(--border2)"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="15 18 9 12 15 6"/>
+                    </svg>
+                  </button>
+                  <button
+                    onClick={() => scrollTableBy(320)}
+                    disabled={!tableCanScrollRight}
+                    aria-label="Scroll table right"
+                    style={{
+                      width: 32, height: 32,
+                      background: "var(--surface2)",
+                      border: "1px solid var(--border)",
+                      borderRadius: 6,
+                      color: tableCanScrollRight ? "var(--text)" : "var(--border2)",
+                      cursor: tableCanScrollRight ? "pointer" : "default",
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      opacity: tableCanScrollRight ? 1 : 0.3,
+                      flexShrink: 0, transition: "opacity 0.15s",
+                    }}
+                    onMouseOver={(e) => { if (tableCanScrollRight) e.currentTarget.style.borderColor = "var(--border2)"; }}
+                    onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6"/>
+                    </svg>
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Advanced filters */}
@@ -1317,10 +1445,19 @@ export default function LeadsPage({
                   {visibleCols.map((col) => <col key={col.key} style={{ width: col.width }} />)}
                   <col style={{ width: 90 }} />
                 </colgroup>
-                <thead>
+                <thead
+                  ref={theadRef}
+                  style={{ cursor: "grab", userSelect: "none" }}
+                  onMouseDown={(e) => {
+                    if (e.target.closest(".resize-handle")) return;
+                    const el = leadsTableRef.current;
+                    if (!el) return;
+                    tableDragRef.current = { active: true, startX: e.clientX, startScrollLeft: el.scrollLeft, moved: false };
+                  }}
+                >
                   <tr>
                     {visibleCols.map((col) => (
-                      <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: "pointer", userSelect: "none", position: "relative", overflow: "visible" }}>
+                      <th key={col.key} onClick={() => handleSort(col.key)} style={{ cursor: "inherit", userSelect: "none", position: "relative", overflow: "visible" }}>
                         <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
                           {col.label}
                           {sortCol === col.key ? <span style={{ opacity: 0.7 }}>{sortDir === 1 ? "↑" : "↓"}</span> : <span style={{ opacity: 0.2 }}>↕</span>}
