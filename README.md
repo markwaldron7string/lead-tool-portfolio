@@ -1,9 +1,10 @@
-![CI](https://github.com/markwaldron7string/lead-tool/actions/workflows/ci.yml/badge.svg)
+![CI](https://github.com/markwaldron7string/lead-tool-portfolio/actions/workflows/ci.yml/badge.svg)
+![E2E](https://github.com/markwaldron7string/lead-tool-portfolio/actions/workflows/cypress.yml/badge.svg)
 # 🏠 Buyers Agent Lead Scraper
 
 > A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand — built for a real client in the Australian property industry.
 
-**[→ Live Demo](https://lead-tool-portfolio.vercel.app/)**
+**[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
 
 ---
 
@@ -63,7 +64,7 @@ Google Places API
 ### Project Structure
 
 ```
-lead-tool/
+lead-tool-portfolio/
   app/
     page.js                   # Country selector (AU / NZ)
     au/page.js                # Australia leads dashboard
@@ -164,8 +165,8 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 ## Running Locally
 
 ```bash
-git clone https://github.com/markwaldron7string/lead-tool
-cd lead-tool
+git clone https://github.com/markwaldron7string/lead-tool-portfolio
+cd lead-tool-portfolio
 npm install
 # Add environment variables to .env.local
 npm run dev
