@@ -1,0 +1,31 @@
+{
+  "leads": [
+    {
+      "title": "Cypress Buyers Agency",
+      "phone": "+61 2 5550 0199",
+      "website": "https://example.test/cypress-buyers",
+      "street": "99 Test Lane",
+      "city": "Sydney",
+      "state": "New South Wales",
+      "totalScore": "4.9",
+      "reviewsCount": "51",
+      "url": "https://maps.example.test/cypress-buyers",
+      "emails": "",
+      "founder_name": "",
+      "linkedin_company": "",
+      "linkedin_personal": "",
+      "instagram": "",
+      "facebook": "",
+      "abn": "",
+      "entity_type": "",
+      "_source": "buyers agent Sydney",
+      "_category": "Investment BA",
+      "_score": 0,
+      "_scraped_now": true
+    }
+  ],
+  "count": 1,
+  "city": "Sydney",
+  "searchTerm": "buyers agent",
+  "pages": 1
+}
