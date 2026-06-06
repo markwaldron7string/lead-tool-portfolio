@@ -182,11 +182,6 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ---
 
-## CI/CD
-
-- **CI** — GitHub Actions runs the Jest suite on every push and pull request (see the badge above). The CI job runs tests only; it does not run a production build, since the build requires live API credentials (OpenAI, Google Places, ABN/NZBN) that are not committed to the repo.
-- **CD** — Deployment is handled automatically by Vercel. Two deployments run from this branch: the live tool, and a separate portfolio demo with scraping and enrichment disabled via the `NEXT_PUBLIC_DEMO_MODE` environment variable. All API keys are stored as Vercel environment variables rather than in the repo.
-
 ## Cost Summary
 
 | Service | Cost | Free tier |
