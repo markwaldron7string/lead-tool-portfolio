@@ -1,5 +1,9 @@
 ![CI](https://github.com/markwaldron7string/lead-tool-portfolio/actions/workflows/ci.yml/badge.svg)
 ![E2E](https://github.com/markwaldron7string/lead-tool-portfolio/actions/workflows/cypress.yml/badge.svg)
+[![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai&logoColor=white)](https://openai.com)
+[![Vercel](https://img.shields.io/badge/Deployed-Vercel-000000?logo=vercel&logoColor=white)](YOUR_DEMO_URL)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?logo=typescript&logoColor=white)](https://typescriptlang.org)
 # 🏠 Buyers Agent Lead Scraper
 
 > A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand — built for a real client in the Australian property industry.
