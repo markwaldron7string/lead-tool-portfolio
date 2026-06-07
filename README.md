@@ -11,7 +11,7 @@
 
 **[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
 
-> **Note:** This is the public portfolio version. It runs on generated sample data, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
+> **Note:** This is the public portfolio version. The business data in this version is artificial, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
 
 ---
 
