@@ -560,15 +560,7 @@ export default function LeadsPage({
   const [tableCanScrollLeft, setTableCanScrollLeft] = useState(false);
   const [tableCanScrollRight, setTableCanScrollRight] = useState(false);
   const isMobile = useIsMobile();
-  const defaultVisibleColKeys = useMemo(
-    () => new Set(getDefaultCols(regionLabel, businessIdLabel).filter((c) => c.visible).map((c) => c.key)),
-    [regionLabel, businessIdLabel]
-  );
-  const hasAdditionalVisibleCols = useMemo(
-    () => cols.some((col) => col.visible && !defaultVisibleColKeys.has(col.key)),
-    [cols, defaultVisibleColKeys]
-  );
-  const tableScrollControlsEnabled = !isMobile && hasAdditionalVisibleCols && (tableCanScrollLeft || tableCanScrollRight);
+  const tableScrollControlsEnabled = !isMobile && (tableCanScrollLeft || tableCanScrollRight);
   const [bannerDismissed, setBannerDismissed] = useState(false);
 
   useEffect(() => {
