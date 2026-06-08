@@ -135,8 +135,8 @@ function ScoreInfoTooltip({ onFilter, theme }) {
     { label: "Founder name", pts: "20 pts", color: "#3ecf8e", sub: null },
     { label: "Website", pts: "10 pts", color: "#4c9cf1", sub: null },
     { label: "Phone number", pts: "10 pts", color: "#4c9cf1", sub: null },
-    { label: "Google rating", pts: "up to 15", color: "#e8a045", sub: [["4.8+","15 pts"],["4.5–4.7","12 pts"],["4.0–4.4","8 pts"],["3.5–3.9","4 pts"]] },
-    { label: "Review count", pts: "up to 10", color: "#e8a045", sub: [["50+ reviews","10 pts"],["20–49","7 pts"],["10–19","4 pts"],["1–9","2 pts"]] },
+    { label: "Google rating", pts: "up to 15", color: "#e8a045", sub: [["4.8+","15 pts"],["4.5-4.7","12 pts"],["4.0-4.4","8 pts"],["3.5-3.9","4 pts"]] },
+    { label: "Review count", pts: "up to 10", color: "#e8a045", sub: [["50+ reviews","10 pts"],["20-49","7 pts"],["10-19","4 pts"],["1-9","2 pts"]] },
     { label: "Categorised", pts: "5 pts", color: "#666670", sub: null },
     { label: "LinkedIn / Socials", pts: "bonus", color: "#a78bfa", sub: null },
   ];
@@ -163,7 +163,7 @@ function ScoreInfoTooltip({ onFilter, theme }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: pinned ? 12 : 4 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>How scores are calculated</div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>Each lead scored 0–100 on data quality</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>Each lead scored 0-100 on data quality</div>
               </div>
               <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "2px 4px" }}
                 onMouseOver={(e) => (e.currentTarget.style.color = "var(--text)")}

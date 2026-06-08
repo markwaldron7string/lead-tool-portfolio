@@ -2,7 +2,7 @@
 ![E2E](https://github.com/markwaldron7string/lead-tool-portfolio/actions/workflows/cypress.yml/badge.svg)
 [![Next.js](https://img.shields.io/badge/Next.js-16-000000?logo=nextdotjs&logoColor=white)](https://nextjs.org)
 [![TypeScript](https://img.shields.io/badge/TypeScript-3178c6?logo=typescript&logoColor=white)](https://typescriptlang.org)
-[![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4o--mini-412991?logo=openai&logoColor=white)](https://openai.com)
+[![OpenAI](https://img.shields.io/badge/OpenAI-GPT-4o-mini-412991?logo=openai&logoColor=white)](https://openai.com)
 [![Google Places](https://img.shields.io/badge/Google_Places_API-4285F4?logo=googlemaps&logoColor=white)](https://developers.google.com/maps/documentation/places)
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-000000?logo=vercel&logoColor=white)](YOUR_DEMO_URL)
 # 🏠 Buyers Agent Lead Scraper
@@ -13,16 +13,16 @@
 
 > **Note:** This is the public portfolio version. The business data in this version is artificial, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
 
----
+-
 
 ![Lead Scraper Dashboard](/public/dashboard.png)
 
----
+-
 
 ## Headline Metrics
 
 | Market | Leads | Emails | Founder Names | LinkedIn Pages | Verified (ABN/NZBN) |
-|---|---|---|---|---|---|
+|-|-|-|-|-|-|
 | 🇦🇺 Australia | **5,783** | 2,066 (36%) | 2,620 (45%) | 1,741 (30%) | 4,941 (85%) |
 | 🇳🇿 New Zealand | **481** | 200 (42%) | 226 (47%) | 216 (45%) | 344 (72%) |
 
@@ -31,7 +31,7 @@
 - **~$25,000** in manual research labour replaced
 - Built and shipped in **2 weeks**
 
----
+-
 
 ## What It Does
 
@@ -53,7 +53,7 @@ Google Places API
   Export CSV → outreach
 ```
 
----
+-
 
 ## Architecture
 
@@ -108,12 +108,12 @@ Fallback
   → Uncategorised
 ```
 
-### Lead Scoring (0–100)
+### Lead Scoring (0-100)
 
 Each lead is scored based on data completeness:
 
 | Signal | Points |
-|---|---|
+|-|-|
 | Email address | 30 |
 | Founder name | 20 |
 | Website | 10 |
@@ -134,7 +134,7 @@ For each lead, the enrichment route:
 
 Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.70.
 
----
+-
 
 ## Key Features
 
@@ -154,12 +154,12 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 
 **Password protection** - cookie-based auth (30-day expiry) via a login page and API route. Keeps the tool private without requiring user accounts. *(Production only - bypassed in demo mode.)*
 
----
+-
 
 ## Environment Variables
 
 | Variable | Description |
-|---|---|
+|-|-|
 | `NEXT_PUBLIC_DEMO_MODE` | Set to `true` to run in demo mode (disables scraping, enrichment, and auth gate) |
 | `OPENAI_API_KEY` | OpenAI - gpt-4o-mini enrichment + gpt-4o deep research *(not needed in demo mode)* |
 | `GOOGLE_PLACES_KEY` | Google Places API - live scraping *(not needed in demo mode)* |
@@ -167,7 +167,7 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 | `NZBN_API_KEY` | NZ Companies Office - free, register at api.business.govt.nz *(not needed in demo mode)* |
 | `SITE_PASSWORD` | Dashboard access password *(not needed in demo mode)* |
 
----
+-
 
 ## Running Locally
 
@@ -182,26 +182,26 @@ Open [http://localhost:3000](http://localhost:3000)
 
 > **Note:** `NEXT_PUBLIC_DEMO_MODE=true` loads the sample dataset and disables scraping, enrichment, and the auth gate. Omit it (and supply real API keys in `.env.local`) to run the full production version locally.
 
----
+-
 
 ## CI/CD
 
 - **CI** - GitHub Actions runs the Jest unit suite and the Cypress E2E suite (with `NEXT_PUBLIC_DEMO_MODE=true`) on every push and pull request (see the badges above).
 - **CD** - Deployment is handled automatically by Vercel with `NEXT_PUBLIC_DEMO_MODE=true` set as a project environment variable. The production version of this tool - with the real client dataset and live API integrations - is maintained in a private repository.
 
----
+-
 
 ## Cost Summary
 
 | Service | Cost | Free tier |
-|---|---|---|
+|-|-|-|
 | OpenAI gpt-4o-mini | ~$5.70 per full AU enrichment run | $5 signup credit |
 | Google Places API | ~$17 per 1,000 searches | $200/month credit |
 | ABR (ABN lookup) | Free | Unlimited |
 | NZ Companies Office | Free | Unlimited |
 | Vercel hosting | Free | Hobby plan |
 
----
+-
 
 ## Built By
 

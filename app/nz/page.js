@@ -8,7 +8,7 @@ const NZ_CITIES = [
 export default function NZPage() {
   return (
     <LeadsPage
-      title="Buyers Agents – New Zealand 🇳🇿"
+      title="Buyers Agents - New Zealand 🇳🇿"
       csvFile="/leads_nz.csv"
       cities={NZ_CITIES}
       regionLabel="Region"

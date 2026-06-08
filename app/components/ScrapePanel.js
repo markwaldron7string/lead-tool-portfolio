@@ -734,7 +734,7 @@ export default function ScrapePanel({
               <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, lineHeight: 1.5 }}>
                 This will run <strong style={{ color: "var(--text)" }}>{template?.terms.length} search terms</strong> across{" "}
                 <strong style={{ color: "var(--text)" }}>{template?.cities.length} areas</strong> (~{runAllCallCount.toLocaleString()} searches).{" "}
-                Estimated time: <strong style={{ color: "var(--amber)" }}>2–3 hours</strong>.{" "}
+                Estimated time: <strong style={{ color: "var(--amber)" }}>2-3 hours</strong>.{" "}
                 Keep this tab open while it runs.
               </div>
               <div style={{ display: "flex", gap: 8 }}>
