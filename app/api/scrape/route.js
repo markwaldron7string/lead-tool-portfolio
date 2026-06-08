@@ -4,7 +4,7 @@
 //
 // Requires: GOOGLE_PLACES_KEY in .env.local
 // Get your key at: console.cloud.google.com → Enable "Places API (New)"
-// Cost: $17/1000 requests — covered by Google's $200/month free credit.
+// Cost: $17/1000 requests - covered by Google's $200/month free credit.
 
 import { AU_AREAS } from '@/lib/au-areas';
 

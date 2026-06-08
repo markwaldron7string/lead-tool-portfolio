@@ -256,7 +256,7 @@ html[data-theme="light"] .badge-advisor    { background: rgba(190,30,110,0.1); c
 html[data-theme="light"] .badge-unknown    { background: rgba(0,0,0,0.05);     color: #606070; }
 html[data-theme="light"] .badge-excluded   { background: rgba(190,46,46,0.1);  color: #be2e2e; }
 
-/* Table — white rows sit lighter than the gray page background */
+/* Table - white rows sit lighter than the gray page background */
 html[data-theme="light"] tbody td { background: var(--surface); }
 html[data-theme="light"] thead th { background: #f6f6f9; }
 html[data-theme="light"] tbody tr:hover td { background: #f4f4f8; }

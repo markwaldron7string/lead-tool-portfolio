@@ -7,7 +7,7 @@ export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
 
 /**
  * Wraps any button in a non-interactive shell with a styled
- * "Demo mode — disabled" tooltip on hover.
+ * "Demo mode - disabled" tooltip on hover.
  * When DEMO_MODE is false this component is a transparent pass-through.
  */
 export function DemoDisabled({ children }) {
@@ -39,7 +39,7 @@ export function DemoDisabled({ children }) {
             pointerEvents: "none",
           }}
         >
-          Demo mode — disabled
+          Demo mode - disabled
         </div>
       )}
     </div>

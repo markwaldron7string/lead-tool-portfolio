@@ -17,7 +17,7 @@ describe('scrape panel in demo mode', () => {
     cy.get('[data-cy="all-areas-button"]').should('be.visible');
 
     // In demo mode the scrape and run-all-terms buttons are wrapped in
-    // DemoDisabled — they render without data-cy and are not clickable
+    // DemoDisabled - they render without data-cy and are not clickable
     cy.get('[data-cy="scrape-button"]').should('not.exist');
     cy.get('[data-cy="run-all-terms-button"]').should('not.exist');
   });

@@ -1,5 +1,5 @@
 // app/api/research/route.js
-// Deep research — fetches a buyer's agent website and uses GPT-4o to produce
+// Deep research - fetches a buyer's agent website and uses GPT-4o to produce
 // a qualitative analysis to help cold callers personalise their outreach.
 // Separate from the /api/enrich route (which uses gpt-4o-mini for contact data).
 
@@ -123,9 +123,9 @@ Provide a structured analysis in valid JSON only:
   "areas_covered": "Geographic areas they serve based on website content",
   "price_range": "Typical property price range they work with if mentioned",
   "client_type": "Who their typical client is e.g. interstate investors, first home buyers, SMSF trustees",
-  "team_size": "Solo operator or team — estimate from website if possible",
+  "team_size": "Solo operator or team - estimate from website if possible",
   "differentiator": "What makes them unique or their key selling point",
-  "tone": "Professional tone — e.g. corporate, boutique, personal, data-driven",
+  "tone": "Professional tone - e.g. corporate, boutique, personal, data-driven",
   "cold_call_hook": "One sentence personalised conversation starter for a cold caller"
 }`;
 

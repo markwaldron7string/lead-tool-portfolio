@@ -7,7 +7,7 @@
 [![Vercel](https://img.shields.io/badge/Deployed-Vercel-000000?logo=vercel&logoColor=white)](YOUR_DEMO_URL)
 # 🏠 Buyers Agent Lead Scraper
 
-> A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand — built for a real client in the Australian property industry.
+> A full-stack lead intelligence platform that finds, verifies, and enriches every buyers agent business across Australia and New Zealand - built for a real client in the Australian property industry.
 
 **[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
 
@@ -35,7 +35,7 @@
 
 ## What It Does
 
-The client sells services to buyers agents and needed a way to find and contact every buyers agent business in Australia. Previously this was done manually through Google Maps — hours of searching, copying, and pasting into spreadsheets.
+The client sells services to buyers agents and needed a way to find and contact every buyers agent business in Australia. Previously this was done manually through Google Maps - hours of searching, copying, and pasting into spreadsheets.
 
 This tool automates the entire pipeline:
 
@@ -58,15 +58,15 @@ Google Places API
 ## Architecture
 
 ### Stack
-- **Next.js 16** (App Router) — frontend + serverless API routes in one project
-- **React 19** — UI with hooks (useState, useEffect, useCallback, useRef)
-- **Tailwind CSS v4** — utility-first styling
-- **OpenAI gpt-4o-mini** — AI enrichment for contact and social data extraction
-- **Google Places API** — live business scraping with location bias
-- **Australian Business Register API** — free ABN verification
-- **NZ Companies Office API** — free NZBN verification
-- **Papa Parse** — client-side CSV parsing
-- **Vercel** — deployment and serverless functions
+- **Next.js 16** (App Router) - frontend + serverless API routes in one project
+- **React 19** - UI with hooks (useState, useEffect, useCallback, useRef)
+- **Tailwind CSS v4** - utility-first styling
+- **OpenAI gpt-4o-mini** - AI enrichment for contact and social data extraction
+- **Google Places API** - live business scraping with location bias
+- **Australian Business Register API** - free ABN verification
+- **NZ Companies Office API** - free NZBN verification
+- **Papa Parse** - client-side CSV parsing
+- **Vercel** - deployment and serverless functions
 
 ### Project Structure
 
@@ -77,11 +77,11 @@ lead-tool-portfolio/
     au/page.js                # Australia leads dashboard
     nz/page.js                # New Zealand leads dashboard
     api/
-      scrape/route.js         # Google Places scraper — 101 AU areas + 10 NZ cities
-      enrich/route.js         # AI enrichment — website fetch + GPT extraction
+      scrape/route.js         # Google Places scraper - 101 AU areas + 10 NZ cities
+      enrich/route.js         # AI enrichment - website fetch + GPT extraction
       abn/route.js            # Australian Business Register lookup
       nzbn/route.js           # NZ Companies Office lookup
-      research/route.js       # Deep research — on-demand GPT-4o analysis
+      research/route.js       # Deep research - on-demand GPT-4o analysis
       auth/route.js           # Password authentication (cookie-based, 30 day expiry)
     login/page.js             # Login page
   lib/
@@ -93,7 +93,7 @@ lead-tool-portfolio/
 
 ### How the Classifier Works
 
-Every lead is classified on load using a keyword-based system that runs **exclusion checks before category assignment**. The exclusion text is built from business name and Google category tags only — deliberately excluding the search term to prevent false positives.
+Every lead is classified on load using a keyword-based system that runs **exclusion checks before category assignment**. The exclusion text is built from business name and Google category tags only - deliberately excluding the search term to prevent false positives.
 
 ```
 Exclusion check (title + Google tags only)
@@ -138,21 +138,21 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 
 ## Key Features
 
-**In-app scraper** — no Apify or third-party scraping tools needed. Pick a search term and area, results appear in the table in real time. "Run all terms" mode cycles through all 10 search terms across all 101 AU areas automatically (~2-3 hours, hands-free).
+**In-app scraper** - no Apify or third-party scraping tools needed. Pick a search term and area, results appear in the table in real time. "Run all terms" mode cycles through all 10 search terms across all 101 AU areas automatically (~2-3 hours, hands-free).
 
-**Coverage checklist** — maps all 101 client-specified geographic areas with green/amber/gap status. Click any area to jump to filtered leads for that area.
+**Coverage checklist** - maps all 101 client-specified geographic areas with green/amber/gap status. Click any area to jump to filtered leads for that area.
 
-**Area filter** — dropdown grouped by state lets users filter to specific suburbs and regions. Partial word matching handles nested geographies (e.g. "Eastern Suburbs Sydney" returns leads from Bondi, Randwick, Paddington etc.)
+**Area filter** - dropdown grouped by state lets users filter to specific suburbs and regions. Partial word matching handles nested geographies (e.g. "Eastern Suburbs Sydney" returns leads from Bondi, Randwick, Paddington etc.)
 
-**Deep research** — on-demand GPT-4o analysis of individual high-value leads. Returns specialization summary, areas covered, client type, team size, and a personalized cold call hook. ~$0.03 per lead, designed for targeted use before outreach.
+**Deep research** - on-demand GPT-4o analysis of individual high-value leads. Returns specialization summary, areas covered, client type, team size, and a personalized cold call hook. ~$0.03 per lead, designed for targeted use before outreach.
 
-**Score-based filtering** — filter to Good (40+), Great (60+), or Best (75+) instantly. Interactive tooltip explains the scoring methodology with clickable tier shortcuts.
+**Score-based filtering** - filter to Good (40+), Great (60+), or Best (75+) instantly. Interactive tooltip explains the scoring methodology with clickable tier shortcuts.
 
-**Column controls** — resizable by drag, toggleable via panel. New columns (LinkedIn, Instagram, ABN, Entity Type) hidden by default.
+**Column controls** - resizable by drag, toggleable via panel. New columns (LinkedIn, Instagram, ABN, Entity Type) hidden by default.
 
-**Enrichment lockdown** — export, scraping, and CSV upload all disable during bulk enrichment to prevent data integrity issues.
+**Enrichment lockdown** - export, scraping, and CSV upload all disable during bulk enrichment to prevent data integrity issues.
 
-**Password protection** — cookie-based auth (30-day expiry) via a login page and API route. Keeps the tool private without requiring user accounts. *(Production only — bypassed in demo mode.)*
+**Password protection** - cookie-based auth (30-day expiry) via a login page and API route. Keeps the tool private without requiring user accounts. *(Production only - bypassed in demo mode.)*
 
 ---
 
@@ -161,10 +161,10 @@ Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.7
 | Variable | Description |
 |---|---|
 | `NEXT_PUBLIC_DEMO_MODE` | Set to `true` to run in demo mode (disables scraping, enrichment, and auth gate) |
-| `OPENAI_API_KEY` | OpenAI — gpt-4o-mini enrichment + gpt-4o deep research *(not needed in demo mode)* |
-| `GOOGLE_PLACES_KEY` | Google Places API — live scraping *(not needed in demo mode)* |
-| `ABN_GUID` | Australian Business Register — free, register at abr.business.gov.au *(not needed in demo mode)* |
-| `NZBN_API_KEY` | NZ Companies Office — free, register at api.business.govt.nz *(not needed in demo mode)* |
+| `OPENAI_API_KEY` | OpenAI - gpt-4o-mini enrichment + gpt-4o deep research *(not needed in demo mode)* |
+| `GOOGLE_PLACES_KEY` | Google Places API - live scraping *(not needed in demo mode)* |
+| `ABN_GUID` | Australian Business Register - free, register at abr.business.gov.au *(not needed in demo mode)* |
+| `NZBN_API_KEY` | NZ Companies Office - free, register at api.business.govt.nz *(not needed in demo mode)* |
 | `SITE_PASSWORD` | Dashboard access password *(not needed in demo mode)* |
 
 ---
@@ -186,8 +186,8 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## CI/CD
 
-- **CI** — GitHub Actions runs the Jest unit suite and the Cypress E2E suite (with `NEXT_PUBLIC_DEMO_MODE=true`) on every push and pull request (see the badges above).
-- **CD** — Deployment is handled automatically by Vercel with `NEXT_PUBLIC_DEMO_MODE=true` set as a project environment variable. The production version of this tool — with the real client dataset and live API integrations — is maintained in a private repository.
+- **CI** - GitHub Actions runs the Jest unit suite and the Cypress E2E suite (with `NEXT_PUBLIC_DEMO_MODE=true`) on every push and pull request (see the badges above).
+- **CD** - Deployment is handled automatically by Vercel with `NEXT_PUBLIC_DEMO_MODE=true` set as a project environment variable. The production version of this tool - with the real client dataset and live API integrations - is maintained in a private repository.
 
 ---
 
@@ -205,6 +205,6 @@ Open [http://localhost:3000](http://localhost:3000)
 
 ## Built By
 
-Mark Waldron — [mark-waldron.com](https://mark-waldron.com) · [LinkedIn](https://linkedin.com/in/mark-waldron-449940158)
+Mark Waldron - [mark-waldron.com](https://mark-waldron.com) · [LinkedIn](https://linkedin.com/in/mark-waldron-449940158)
 
 Frontend Simplified Bootcamp · 2026

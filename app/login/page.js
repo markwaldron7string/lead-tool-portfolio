@@ -61,7 +61,7 @@ function LoginForm() {
         setLoading(false);
       }
     } catch {
-      setError('Something went wrong — please try again');
+      setError('Something went wrong - please try again');
       setLoading(false);
     }
   }

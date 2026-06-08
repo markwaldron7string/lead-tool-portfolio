@@ -6,8 +6,8 @@
  * of the lead scraper. Run with:  node scripts/generate_sample_data.js
  *
  * Output:
- *   public/leads_au.csv  — 75 fake Australian buyers-agent leads
- *   public/leads_nz.csv  — 25 fake New Zealand buyers-agent leads
+ *   public/leads_au.csv  - 75 fake Australian buyers-agent leads
+ *   public/leads_nz.csv  - 25 fake New Zealand buyers-agent leads
  *
  * All data is fictional. No real business names, phone numbers, email
  * addresses or ABN/NZBN numbers are used.
@@ -279,7 +279,7 @@ function nzPhone(city) {
 // ── ABN / NZBN generators ─────────────────────────────────────────────────────
 
 function fakeABN() {
-  // Format: XX XXX XXX XXX — random digits, not checksum-valid (fine for demo)
+  // Format: XX XXX XXX XXX - random digits, not checksum-valid (fine for demo)
   const n = () => randInt(0, 9);
   return `${n()}${n()} ${n()}${n()}${n()} ${n()}${n()}${n()} ${n()}${n()}${n()}`;
 }
@@ -585,8 +585,8 @@ function stateAbbr(s) {
            "Northern Territory": "NT" }[s] || s;
 }
 
-console.log(`✓ public/leads_au.csv  — ${auRows.length} leads`);
-console.log(`✓ public/leads_nz.csv  — ${nzRows.length} leads`);
+console.log(`✓ public/leads_au.csv  - ${auRows.length} leads`);
+console.log(`✓ public/leads_nz.csv  - ${nzRows.length} leads`);
 
 console.log("\n── AU sample (first 3 rows) ──────────────────────────────────");
 for (const row of auRows.slice(0, 3)) {

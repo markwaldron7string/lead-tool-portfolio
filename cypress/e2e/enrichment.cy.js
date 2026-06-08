@@ -14,7 +14,7 @@ describe('enrichment in demo mode', () => {
       .and('contain', 'Extracts contact info');
 
     // In demo mode the "Enrich all leads" button is wrapped in DemoDisabled
-    // — it renders without data-cy and is not clickable
+    // - it renders without data-cy and is not clickable
     cy.get('[data-cy="enrich-all-button"]').should('not.exist');
 
     // Per-lead enrich and research buttons are also replaced by DemoDisabled

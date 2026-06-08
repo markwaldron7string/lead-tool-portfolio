@@ -388,7 +388,7 @@ function ResearchPanel({ research, onClose }) {
         </div>
       )}
 
-      {/* Cold call hook — most prominent element */}
+      {/* Cold call hook - most prominent element */}
       {research.cold_call_hook && (
         <div style={{
           padding: "13px 16px", borderRadius: 8,
@@ -460,7 +460,7 @@ function DemoBanner({ onDismiss }) {
       border: "1px solid rgba(76, 156, 241, 0.22)",
       fontSize: 13, lineHeight: 1.4, color: "var(--muted)",
     }}>
-      <span>👋 Portfolio demo — live data, read-only view. Scraping and enrichment are disabled.</span>
+      <span>👋 Portfolio demo - live data, read-only view. Scraping and enrichment are disabled.</span>
       <button
         onClick={onDismiss}
         style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, padding: "0 0 0 12px", lineHeight: 1, flexShrink: 0 }}
@@ -530,7 +530,7 @@ export default function LeadsPage({
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [hideExcluded, setHideExcluded] = useState(true);
 
-  // Session duplicates — counts dupes seen during live scraping (stats.dupes only covers CSV imports)
+  // Session duplicates - counts dupes seen during live scraping (stats.dupes only covers CSV imports)
   const [sessionDupes, setSessionDupes] = useState(0);
 
   const [filterArea, setFilterArea] = useState('');
@@ -878,7 +878,7 @@ export default function LeadsPage({
   const researchOne = useCallback(async (lead) => {
     const key = lead.title;
 
-    // Already researched — just toggle the panel open/closed
+    // Already researched - just toggle the panel open/closed
     if (lead._research) {
       setResearchOpen((prev) => ({ ...prev, [key]: !prev[key] }));
       return;
@@ -1065,7 +1065,7 @@ export default function LeadsPage({
               onDragLeave={DEMO_MODE ? undefined : () => setIsDragging(false)}
               onDrop={DEMO_MODE ? undefined : onDrop}
               onClick={DEMO_MODE ? undefined : () => fileInputRef.current?.click()}
-              title={DEMO_MODE ? "Demo mode — disabled" : undefined}
+              title={DEMO_MODE ? "Demo mode - disabled" : undefined}
             >
               <div style={{ fontSize: 20, marginBottom: 8, color: "var(--muted)" }}>up</div>
               <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Or drop an existing CSV</div>
@@ -1174,7 +1174,7 @@ export default function LeadsPage({
             </div>
             <div data-cy="enrichment-summary" style={{ fontSize: 12, color: "var(--muted)" }}>
               {enrichedCount > 0
-                ? `${enrichedCount.toLocaleString()} leads enriched — contact, LinkedIn, Instagram, ${businessIdLabel}`
+                ? `${enrichedCount.toLocaleString()} leads enriched - contact, LinkedIn, Instagram, ${businessIdLabel}`
                 : `Extracts contact info, LinkedIn, Instagram, and ${businessIdLabel} for each lead`}
             </div>
           </div>
@@ -1217,7 +1217,7 @@ export default function LeadsPage({
             marginTop: 8,
             marginBottom: 4,
           }}>
-            ⚡ Enrichment in progress — export and scraping are disabled until complete
+            ⚡ Enrichment in progress - export and scraping are disabled until complete
           </div>
         )}
 
@@ -1390,7 +1390,7 @@ export default function LeadsPage({
               </div>
             )}
 
-            {/* Table scroll arrows — bare arrows, right-aligned above table */}
+            {/* Table scroll arrows - bare arrows, right-aligned above table */}
             {tableScrollControlsEnabled && (
               <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", gap: 10, marginBottom: 5 }}>
                 {tableCanScrollLeft && (
@@ -1548,10 +1548,10 @@ export default function LeadsPage({
                                     bulkRunning
                                       ? "Disabled during bulk enrichment"
                                       : !hasWebsite
-                                        ? "No website — cannot research"
+                                        ? "No website - cannot research"
                                         : hasResearch
                                           ? isResearchOpen ? "Close research panel" : "View deep research"
-                                          : "Deep research — summarise what this business does (uses GPT-4o)\n~$0.03 per lead — use for high-priority leads only"
+                                          : "Deep research - summarise what this business does (uses GPT-4o)\n~$0.03 per lead - use for high-priority leads only"
                                   }
                                   style={{
                                     background: hasResearch ? "rgba(167,139,250,0.1)" : "none",

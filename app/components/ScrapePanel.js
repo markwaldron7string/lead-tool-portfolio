@@ -68,7 +68,7 @@ function PreviewTable({ newLeads, onViewInTable }) {
         marginBottom: 8,
       }}>
         <div style={{ fontSize: 12, color: "var(--muted)", fontFamily: "var(--font-mono)" }}>
-          New leads preview — {newLeads.length} added
+          New leads preview - {newLeads.length} added
         </div>
         {onViewInTable && (
           <button
@@ -120,13 +120,13 @@ function PreviewTable({ newLeads, onViewInTable }) {
                   {lead.title}
                 </td>
                 <td style={{ padding: "6px 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--muted)" }}>
-                  {lead.city || "—"}
+                  {lead.city || "-"}
                 </td>
                 <td style={{ padding: "6px 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "var(--muted)", fontFamily: "var(--font-mono)", fontSize: 11 }}>
-                  {lead.state || "—"}
+                  {lead.state || "-"}
                 </td>
                 <td style={{ padding: "6px 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text)" }}>
-                  {lead.phone || "—"}
+                  {lead.phone || "-"}
                 </td>
                 <td style={{ padding: "6px 10px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   <span style={{
@@ -164,11 +164,11 @@ function PreviewTable({ newLeads, onViewInTable }) {
 export default function ScrapePanel({
   onLeadsFound,
   cities,          // city list used in custom mode
-  country,         // "AU" | "NZ" — sets default template
+  country,         // "AU" | "NZ" - sets default template
   countryName,
   defaultOpen = false,
   onViewInTable,   // optional: called when "View all in table" is clicked
-  disabled = false, // true during bulk enrichment — collapses and locks the panel
+  disabled = false, // true during bulk enrichment - collapses and locks the panel
 }) {
   const router = useRouter();
   const initTemplate = TEMPLATES[country] ? country : "AU";
@@ -499,7 +499,7 @@ export default function ScrapePanel({
               </div>
             )}
 
-            {/* City selector — hidden when all cities toggled */}
+            {/* City selector - hidden when all cities toggled */}
             {!allCities && (
               <div style={{ flex: "0 1 220px", opacity: scraping ? 0.4 : 1, pointerEvents: scraping ? "none" : "auto", transition: "opacity 0.2s ease" }}>
                 <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
@@ -594,7 +594,7 @@ export default function ScrapePanel({
                 {allCities ? `✓ All ${activeCities.length} areas` : "All areas"}
               </button>
 
-              {/* Scrape button — only ever starts a scrape, never cancels */}
+              {/* Scrape button - only ever starts a scrape, never cancels */}
               {DEMO_MODE ? (
                 <DemoDisabled>
                   <button style={{
@@ -640,7 +640,7 @@ export default function ScrapePanel({
                 </button>
               )}
 
-              {/* Separate Cancel button — shown only while a single scrape is in progress */}
+              {/* Separate Cancel button - shown only while a single scrape is in progress */}
               {scraping && !allTermsRunning && (
                 <button
                   data-cy="scrape-cancel-button"
@@ -773,13 +773,13 @@ export default function ScrapePanel({
                     <>
                       Term <strong style={{ color: "var(--text)", fontFamily: "var(--font-mono)" }}>{termProgress.current}</strong> of{" "}
                       <strong style={{ color: "var(--text)", fontFamily: "var(--font-mono)" }}>{termProgress.total}</strong>
-                      {" "}—{" "}
+                      {" "}-{" "}
                       <em style={{ color: "var(--text)", fontStyle: "normal" }}>{termProgress.term}</em>
                     </>
                   )}
                   {cityProgress && (
                     <>
-                      {" "}— Scraping{" "}
+                      {" "}- Scraping{" "}
                       <strong style={{ color: "var(--text)" }}>{cityProgress.city}</strong>…
                       {" "}Area{" "}
                       <strong style={{ fontFamily: "var(--font-mono)", color: "var(--text)" }}>{cityProgress.current}</strong> of{" "}
@@ -901,7 +901,7 @@ export default function ScrapePanel({
                 </span>
               </div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>
-                💡 Tip: Export your CSV now before running enrichment — enrichment can take a while and you won&apos;t lose your data.
+                💡 Tip: Export your CSV now before running enrichment - enrichment can take a while and you won&apos;t lose your data.
               </div>
             </div>
           )}

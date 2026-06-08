@@ -128,7 +128,7 @@ function AreaRow({ area, onClick }) {
           </span>
         ) : (
           <span style={{ fontSize: 12, color: "var(--muted)", fontStyle: "italic" }}>
-            No leads — scrape needed
+            No leads - scrape needed
           </span>
         )}
       </div>

@@ -1,6 +1,6 @@
 // app/api/enrich/route.js
 // Fetches a website and extracts contact info + social media URLs using GPT.
-// Social links are extracted from raw HTML using regex patterns — much more
+// Social links are extracted from raw HTML using regex patterns - much more
 // reliable than hunting for href attributes, since most sites store social
 // URLs in JavaScript, JSON-LD, or data attributes.
 
@@ -40,7 +40,7 @@ function extractText(html) {
 // ── Social URL extraction ─────────────────────────────────────────────────────
 // Searches the raw HTML (before stripping tags) for social media URL patterns.
 // This catches URLs in href attributes, JavaScript strings, JSON-LD schema,
-// data-* attributes, onclick handlers — anywhere they appear in the HTML.
+// data-* attributes, onclick handlers - anywhere they appear in the HTML.
 
 function extractSocialUrls(html) {
   const found = {
@@ -201,12 +201,12 @@ Business name: ${businessName}
 ${existingEmail ? `Known email: ${existingEmail}` : ''}
 
 Social media URLs already found on the page (use these directly if present):
-${socialContext || '(none detected automatically — check page text below)'}
+${socialContext || '(none detected automatically - check page text below)'}
 
 Page text:
 ${pageText}
 
-Respond ONLY with a valid JSON object — no explanation, no markdown fences:
+Respond ONLY with a valid JSON object - no explanation, no markdown fences:
 {
   "founder_name": "Real person's first and last name (2-3 words, title-cased). Must be a human being, never a company name or page heading. Null if not found with confidence.",
   "job_title": "Their exact job title e.g. Principal Buyers Agent, Director, Founder. Null if not found.",
