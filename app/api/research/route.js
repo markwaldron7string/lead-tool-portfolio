@@ -90,11 +90,7 @@ async function getPageText(baseUrl) {
 
 export async function POST(request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return Response.json({ error: 'Not available in demo mode' }, { status: 503 });
-    }
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const { website, businessName } = await request.json();
 
     if (!website) {

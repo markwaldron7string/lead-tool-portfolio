@@ -1,24 +1,18 @@
-describe('scrape panel in demo mode', () => {
+describe('mocked scraping flow', () => {
   beforeEach(() => {
     cy.blockUnmockedPaidApis();
-    cy.mockLeadCsv('/leads_au.csv', 'leads-au-single.csv');
+    cy.mockLeadCsv('/leads_au.csv', 'leads-empty.csv');
+    cy.mockScrapeResponse('scrape-au.json');
   });
 
-  it('shows the scrape panel but scraping is disabled in demo mode', () => {
+  it('shows a demo notice instead of scraping on the portfolio site', () => {
     cy.visit('/au');
 
-    // Scrape panel header is always visible on the leads dashboard
-    cy.get('[data-cy="scrape-panel"]').should('be.visible');
+    cy.get('[data-cy="empty-leads-message"]').should('contain', 'No leads yet');
+    cy.get('[data-cy="scrape-button"]').click();
 
-    // Panel can be toggled open to reveal its controls
-    cy.get('[data-cy="scrape-panel-toggle"]').click();
-    cy.get('[data-cy="search-term-select"]').should('be.visible');
-    cy.get('[data-cy="area-select"]').should('be.visible');
-    cy.get('[data-cy="all-areas-button"]').should('be.visible');
-
-    // In demo mode the scrape and run-all-terms buttons are wrapped in
-    // DemoDisabled - they render without data-cy and are not clickable
-    cy.get('[data-cy="scrape-button"]').should('not.exist');
-    cy.get('[data-cy="run-all-terms-button"]').should('not.exist');
+    cy.get('[data-cy="demo-notice"]').should('be.visible');
+    cy.get('[data-cy="demo-notice"]').should('contain', 'Scraping disabled on this demo site');
+    cy.get('[data-cy="lead-row"]').should('not.exist');
   });
 });

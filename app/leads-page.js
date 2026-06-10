@@ -1,14 +1,43 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
-import { createPortal } from "react-dom";
+import React, { useState, useCallback, useRef, useEffect, useLayoutEffect, useMemo } from "react";
 import Papa from "papaparse";
 import { processFiles, leadsToCSV, scoreLead } from "@/lib/processor";
 import ScrapePanel from "@/app/components/ScrapePanel";
-import CoverageView from "@/app/components/CoverageView";
-import { DEMO_MODE, DemoDisabled } from "@/app/components/DemoDisabled";
-import { AU_AREA_GROUPS } from "@/lib/au-areas";
+import LeadModal from "@/app/components/LeadModal";
+import { DEMO_MODE, DemoNoticeCard } from "@/app/components/DemoDisabled";
+import { CountrySelect, COUNTRY_OPTIONS } from "@/app/components/CountrySelect";
+import { AU_AREA_GROUPS, AU_AREAS, getAreaGroupsForState, getAreasForState } from "@/lib/au-areas";
+import { NZ_AREAS, getAreaGroupsForRegion } from "@/lib/nz-areas";
+import { getMapConfig } from "@/lib/map-config";
+import { getGoogleRatingColor, formatGoogleRating } from "@/lib/lead-display";
+import { getLeadArea, getMapUrlForLead } from "@/lib/lead-utils";
+
+
+function SunIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  );
+}
+
+function MoonIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
+    </svg>
+  );
+}
 
 const PAGE_SIZE = 30;
 const BATCH_SIZE = 5;
@@ -135,8 +164,8 @@ function ScoreInfoTooltip({ onFilter, theme }) {
     { label: "Founder name", pts: "20 pts", color: "#3ecf8e", sub: null },
     { label: "Website", pts: "10 pts", color: "#4c9cf1", sub: null },
     { label: "Phone number", pts: "10 pts", color: "#4c9cf1", sub: null },
-    { label: "Google rating", pts: "up to 15", color: "#e8a045", sub: [["4.8+","15 pts"],["4.5-4.7","12 pts"],["4.0-4.4","8 pts"],["3.5-3.9","4 pts"]] },
-    { label: "Review count", pts: "up to 10", color: "#e8a045", sub: [["50+ reviews","10 pts"],["20-49","7 pts"],["10-19","4 pts"],["1-9","2 pts"]] },
+    { label: "Google rating", pts: "up to 15", color: "#e8a045", sub: [["4.8+","15 pts"],["4.5–4.7","12 pts"],["4.0–4.4","8 pts"],["3.5–3.9","4 pts"]] },
+    { label: "Review count", pts: "up to 10", color: "#e8a045", sub: [["50+ reviews","10 pts"],["20–49","7 pts"],["10–19","4 pts"],["1–9","2 pts"]] },
     { label: "Categorised", pts: "5 pts", color: "#666670", sub: null },
     { label: "LinkedIn / Socials", pts: "bonus", color: "#a78bfa", sub: null },
   ];
@@ -163,7 +192,7 @@ function ScoreInfoTooltip({ onFilter, theme }) {
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: pinned ? 12 : 4 }}>
               <div>
                 <div style={{ fontSize: 13, fontWeight: 500, color: "var(--text)" }}>How scores are calculated</div>
-                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>Each lead scored 0-100 on data quality</div>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3 }}>Each lead scored 0–100 on data quality</div>
               </div>
               <button onClick={onClose} style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, lineHeight: 1, padding: "2px 4px" }}
                 onMouseOver={(e) => (e.currentTarget.style.color = "var(--text)")}
@@ -228,39 +257,12 @@ function ScoreInfoTooltip({ onFilter, theme }) {
   );
 }
 
-// ── Theme icons ───────────────────────────────────────────────────────────────
-
-function SunIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <line x1="12" y1="1" x2="12" y2="3"/>
-      <line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/>
-      <line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
-    </svg>
-  );
-}
-
 // ── Small components ──────────────────────────────────────────────────────────
 
 function StatCard({ label, value, color, subtitle }) {
   const c = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)", blue: "var(--blue)", purple: "#a78bfa" };
-  const testId = `stat-${String(label).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
   return (
-    <div className="stat-card fade-up" data-cy={testId}>
+    <div className="stat-card fade-up">
       <div className="stat-label">{label}</div>
       <div className="stat-value" style={{ color: c[color] || "var(--text)" }}>{value?.toLocaleString() ?? "---"}</div>
       {subtitle && <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 3, lineHeight: 1.3 }}>{subtitle}</div>}
@@ -294,10 +296,14 @@ function SocialLink({ url, type }) {
     const p = u.pathname.split("/").filter(Boolean);
     label = p[p.length - 1] || u.hostname;
   } catch {}
-  const colors = { linkedin: "var(--linkedin-color)", instagram: "var(--instagram-color)", facebook: "#1877f2" };
+  const color = type === "instagram"
+    ? "var(--instagram-color)"
+    : type === "linkedin"
+      ? "var(--linkedin-color)"
+      : "var(--blue)";
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
-      style={{ color: colors[type] || "var(--blue)", textDecoration: "none", fontSize: 12 }}
+      style={{ color, textDecoration: "none", fontSize: 12 }}
       title={url}>
       {label.slice(0, 22)}{label.length > 22 ? "..." : ""}
     </a>
@@ -440,78 +446,96 @@ const PAGE_STYLES = `
   @keyframes spin { to { transform: rotate(360deg); } }
   .resize-handle { position:absolute;right:0;top:0;bottom:0;width:6px;cursor:col-resize;user-select:none;z-index:2; }
   .resize-handle:hover,.resize-handle:active { background:var(--green);opacity:0.5; }
-  .col-panel { position:absolute;top:calc(100% + 6px);right:0;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px;min-width:210px;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-height:420px;overflow-y:auto; }
+  .col-panel { position:absolute;top:calc(100% + 6px);left:0;z-index:50;background:var(--surface);border:1px solid var(--border2);border-radius:10px;padding:12px;min-width:210px;box-shadow:0 8px 32px rgba(0,0,0,0.4);max-height:420px;overflow-y:auto; }
   .col-row { display:flex;align-items:center;gap:8px;padding:5px 0;font-size:13px;cursor:pointer;color:var(--text); }
   .col-row:hover { color:var(--green); }
   .col-check { width:14px;height:14px;border:1px solid var(--border2);border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:10px;flex-shrink:0; }
   .col-check.on { background:var(--green);border-color:var(--green);color:#000; }
 `;
 
-const COUNTRY_FLAG = { AU: "AU", NZ: "NZ" };
+function LeadsPageTitle({ country, isMobile, large = false, style = {} }) {
+  const fontSize = large ? (isMobile ? 20 : 26) : (isMobile ? 16 : 20);
 
-// ── Demo mode banner ──────────────────────────────────────────────────────────
+  return (
+    <h1
+      data-cy="leads-page-title"
+      style={{
+        fontSize,
+        fontWeight: 600,
+        letterSpacing: "-0.02em",
+        lineHeight: 1,
+        color: "var(--text)",
+        ...style,
+      }}
+    >
+      Buyers Agents -{" "}
+      <CountrySelect country={country} fontSize={fontSize} />
+    </h1>
+  );
+}
 
-function DemoBanner({ onDismiss }) {
+// ── View toggle (AU/NZ map countries) ─────────────────────────────────────────
+
+function ViewToggle({ viewMode, setViewMode, mapPath = "/au/map" }) {
+  const btnStyle = (active) => ({
+    background: active ? "var(--surface)" : "transparent",
+    border: "none",
+    color: active ? "var(--text)" : "var(--muted)",
+    borderRadius: 5,
+    padding: "5px 14px",
+    fontSize: 12,
+    cursor: "pointer",
+    fontWeight: active ? 600 : 400,
+    transition: "all 0.15s",
+    textDecoration: "none",
+    display: "inline-block",
+    lineHeight: "normal",
+  });
   return (
     <div style={{
-      display: "flex", alignItems: "center", justifyContent: "space-between",
-      padding: "10px 16px", borderRadius: 8, marginBottom: 20,
-      background: "rgba(76, 156, 241, 0.07)",
-      border: "1px solid rgba(76, 156, 241, 0.22)",
-      fontSize: 13, lineHeight: 1.4, color: "var(--muted)",
+      display: "flex", background: "var(--surface2)", borderRadius: 7,
+      padding: 2, border: "1px solid var(--border)", alignItems: "center",
     }}>
-      <span>👋 Portfolio demo - live data, read-only view. Scraping and enrichment are disabled.</span>
-      <button
-        onClick={onDismiss}
-        style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 14, padding: "0 0 0 12px", lineHeight: 1, flexShrink: 0 }}
-        onMouseOver={(e) => (e.currentTarget.style.color = "var(--text)")}
-        onMouseOut={(e) => (e.currentTarget.style.color = "var(--muted)")}
-      >✕</button>
+      <button onClick={() => setViewMode("leads")} style={btnStyle(viewMode === "leads")}>
+        Leads
+      </button>
+      <a href={mapPath} style={btnStyle(false)}>Map</a>
     </div>
   );
 }
 
-// ── View toggle (AU only) ─────────────────────────────────────────────────────
-
-function ViewToggle({ viewMode, setViewMode }) {
+function MapLink({ href, children }) {
+  if (!href) return <span style={{ color: "var(--city-color)" }}>{children || "---"}</span>;
   return (
-    <div style={{
-      display: "flex", background: "var(--surface2)", borderRadius: 7,
-      padding: 2, border: "1px solid var(--border)",
-    }}>
-      {[["leads", "Leads"], ["coverage", "Coverage"]].map(([key, label]) => (
-        <button
-          key={key}
-          onClick={() => setViewMode(key)}
-          style={{
-            background: viewMode === key ? "var(--surface)" : "transparent",
-            border: "none",
-            color: viewMode === key ? "var(--text)" : "var(--muted)",
-            borderRadius: 5,
-            padding: "5px 14px",
-            fontSize: 12,
-            cursor: "pointer",
-            fontWeight: viewMode === key ? 600 : 400,
-            transition: "all 0.15s",
-          }}
-        >
-          {label}
-        </button>
-      ))}
-    </div>
+    <button
+      type="button"
+      onClick={() => { window.location.href = href; }}
+      style={{
+        background: "none", border: "none", color: "var(--city-color)", cursor: "pointer",
+        fontWeight: 500, padding: 0, textAlign: "left", fontSize: "inherit",
+        textDecorationLine: "underline",
+        textDecorationStyle: "solid",
+        textDecorationColor: "transparent",
+        transition: "text-decoration-color 0.15s",
+      }}
+      onMouseOver={(e) => { e.currentTarget.style.textDecorationColor = "currentColor"; }}
+      onMouseOut={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
+    >
+      {children}
+    </button>
   );
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
 
 export default function LeadsPage({
-  title,
   csvFile,
   cities,
   regionLabel,
   businessIdLabel,
   country,
   countryName,
+  initialFilterArea,
 }) {
   const [theme, toggleTheme] = useTheme();
 
@@ -533,7 +557,7 @@ export default function LeadsPage({
   // Session duplicates - counts dupes seen during live scraping (stats.dupes only covers CSV imports)
   const [sessionDupes, setSessionDupes] = useState(0);
 
-  const [filterArea, setFilterArea] = useState('');
+  const [filterArea, setFilterArea] = useState(initialFilterArea || '');
 
   // View mode: "leads" | "coverage" (AU only)
   const [viewMode, setViewMode] = useState("leads");
@@ -562,6 +586,9 @@ export default function LeadsPage({
   const isMobile = useIsMobile();
   const tableScrollControlsEnabled = !isMobile && (tableCanScrollLeft || tableCanScrollRight);
   const [bannerDismissed, setBannerDismissed] = useState(false);
+  const [takenLeads, setTakenLeads]           = useState([]);
+  const [modalLead, setModalLead]             = useState(null);
+  const [demoNotice, setDemoNotice]           = useState(null);
 
   useEffect(() => {
     function h(e) {
@@ -570,6 +597,44 @@ export default function LeadsPage({
     document.addEventListener("mousedown", h);
     return () => document.removeEventListener("mousedown", h);
   }, []);
+
+  useLayoutEffect(() => {
+    if (!showColPanel || !colPanelRef.current) return;
+    const panel = colPanelRef.current.querySelector(".col-panel");
+    if (!panel) return;
+
+    const margin = 12;
+    const positionPanel = () => {
+      panel.style.left = "0";
+      panel.style.right = "auto";
+
+      let rect = panel.getBoundingClientRect();
+      if (rect.right > window.innerWidth - margin) {
+        panel.style.left = "auto";
+        panel.style.right = "0";
+        rect = panel.getBoundingClientRect();
+      }
+      if (rect.left < margin) {
+        const parentLeft = colPanelRef.current.getBoundingClientRect().left;
+        panel.style.left = `${margin - parentLeft}px`;
+        panel.style.right = "auto";
+      }
+    };
+
+    positionPanel();
+    window.addEventListener("resize", positionPanel);
+    return () => window.removeEventListener("resize", positionPanel);
+  }, [showColPanel]);
+
+  useEffect(() => {
+    if (country !== "AU") return;
+    let cancelled = false;
+    fetch("/api/exclusivity")
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (!data || cancelled) return; setTakenLeads(data.takenLeads || []); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [country]);
 
   // ── Column resize ─────────────────────────────────────────────────────────
 
@@ -670,7 +735,7 @@ export default function LeadsPage({
     setSearch(""); setFilterState(""); setFilterCategory("");
     setFilterScore(0); setFilterSource(""); setPage(1);
     setEnriching({}); setEnrichProgress(null); setBulkRunning(false);
-    setFilterArea(''); setViewMode("leads");
+    setFilterArea(""); setViewMode("leads");
     setSessionDupes(0);
   }, []);
 
@@ -721,19 +786,17 @@ export default function LeadsPage({
     }, 60);
   }, []);
 
-  // ── Coverage area click ───────────────────────────────────────────────────
-
-  const handleCoverageAreaClick = useCallback((areaName) => {
-    setFilterArea(areaName);
-    setSearch("");
-    setFilterState("");
-    setFilterCategory("");
-    setFilterScore(0);
-    setPage(1);
-    setViewMode("leads");
-    setTimeout(() => {
-      leadsTableRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }, 60);
+  const handleMarkLead = useCallback(async (title, markTaken) => {
+    setTakenLeads((prev) =>
+      markTaken ? (prev.includes(title) ? prev : [...prev, title]) : prev.filter((t) => t !== title)
+    );
+    try {
+      await fetch("/api/exclusivity", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ lead: title, taken: markTaken }),
+      });
+    } catch {}
   }, []);
 
   // ── Enrichment ────────────────────────────────────────────────────────────
@@ -747,7 +810,7 @@ export default function LeadsPage({
             body: JSON.stringify({ website: lead.website, businessName: lead.title, existingEmail: lead.emails || "" }),
           }).then((r) => (r.ok ? r.json() : {})).catch(() => ({}))
         : Promise.resolve({}),
-      fetch(country === "NZ" ? "/api/nzbn" : "/api/abn", {
+      fetch("/api/abn", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ businessName: lead.title }),
@@ -768,6 +831,10 @@ export default function LeadsPage({
   }
 
   const enrichOne = useCallback(async (lead) => {
+    if (DEMO_MODE) {
+      setDemoNotice("enrich");
+      return;
+    }
     const key = lead.title;
     setEnriching((prev) => ({ ...prev, [key]: true }));
     try {
@@ -783,6 +850,10 @@ export default function LeadsPage({
   }, []);
 
   const enrichAll = useCallback(async () => {
+    if (DEMO_MODE) {
+      setDemoNotice("enrich");
+      return;
+    }
     const toEnrich = leads.filter((l) => l._category !== "EXCLUDED");
     if (!toEnrich.length) return;
     cancelRef.current = false;
@@ -835,7 +906,6 @@ export default function LeadsPage({
     setTableCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 2);
   }, []);
 
-  // Re-attach scroll listener whenever the table appears (viewMode / leads change)
   const tableVisible = viewMode === "leads" && leads.length > 0;
   useEffect(() => {
     if (!tableVisible) return;
@@ -852,7 +922,6 @@ export default function LeadsPage({
     leadsTableRef.current?.scrollBy({ left: delta, behavior: "smooth" });
   }, []);
 
-  // Global mouse handlers for thead drag-to-scroll
   useEffect(() => {
     function onMove(e) {
       if (!tableDragRef.current.active) return;
@@ -881,6 +950,11 @@ export default function LeadsPage({
     // Already researched - just toggle the panel open/closed
     if (lead._research) {
       setResearchOpen((prev) => ({ ...prev, [key]: !prev[key] }));
+      return;
+    }
+
+    if (DEMO_MODE) {
+      setDemoNotice("research");
       return;
     }
 
@@ -925,13 +999,19 @@ export default function LeadsPage({
     [leads]
   );
 
+  const visibleAreaGroups = useMemo(() => {
+    if (country === "AU") return getAreaGroupsForState(filterState);
+    if (country === "NZ") return getAreaGroupsForRegion(filterState);
+    return [];
+  }, [country, filterState]);
+
   // ── Filter & sort ─────────────────────────────────────────────────────────
 
   function matchesArea(lead, areaName) {
     if (!areaName) return true;
-    const city = (lead.city || '').toLowerCase();
-    const words = areaName.toLowerCase().split(/[\s\-\/]+/).filter(w => w.length >= 4);
-    return words.some(w => city.includes(w) || lead.title.toLowerCase().includes(w));
+    const city = (lead.city || "").toLowerCase();
+    const words = areaName.toLowerCase().split(/[\s\-\/]+/).filter((w) => w.length >= 4);
+    return words.some((w) => city.includes(w) || lead.title.toLowerCase().includes(w));
   }
 
   let filtered = leads.filter((lead) => {
@@ -940,6 +1020,7 @@ export default function LeadsPage({
     if (filterCategory && lead._category !== filterCategory) return false;
     if (filterScore > 0 && (Number(lead._score) || 0) < filterScore) return false;
     if (filterSource && lead._source !== filterSource) return false;
+
     if (filterArea && !matchesArea(lead, filterArea)) return false;
 
     if (search) {
@@ -963,7 +1044,6 @@ export default function LeadsPage({
   const paginated = filtered.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
   const handleSort = (key) => {
-    if (tableDragRef.current.moved) { tableDragRef.current.moved = false; return; }
     if (sortCol === key) setSortDir((d) => d * -1);
     else { setSortCol(key); setSortDir(key === "_score" ? -1 : 1); }
     setPage(1);
@@ -989,8 +1069,10 @@ export default function LeadsPage({
       ]
     : cols.filter((c) => c.visible);
 
-  const flag = COUNTRY_FLAG[country] || "";
+  const flag = COUNTRY_OPTIONS.find((c) => c.code === country)?.flag || "";
   const isAU = country === "AU";
+  const hasMap = country === "AU" || country === "NZ";
+  const mapPath = getMapConfig(country).leadsTablePath + "/map";
 
   // ── Loading ───────────────────────────────────────────────────────────────
 
@@ -1037,7 +1119,7 @@ export default function LeadsPage({
             </div>
             <div style={{ textAlign: "center", marginBottom: 36 }}>
               <div style={{ fontSize: 64, lineHeight: 1, marginBottom: 16 }}>{flag}</div>
-              <h1 data-cy="leads-page-title" style={{ fontSize: isMobile ? 20 : 26, fontWeight: 600, letterSpacing: "-0.02em", marginBottom: 12, color: "var(--text)" }}>{title}</h1>
+              <LeadsPageTitle country={country} isMobile={isMobile} large style={{ marginBottom: 12 }} />
               <p data-cy="empty-leads-message" style={{ fontSize: 15, color: "var(--muted)", margin: 0 }}>No leads yet. Start by scraping Google Maps.</p>
             </div>
             <ScrapePanel
@@ -1060,18 +1142,17 @@ export default function LeadsPage({
             </div>
             <div
               className={`drop-zone ${isDragging ? "dragging" : ""}`}
-              style={{ padding: "28px 24px", textAlign: "center", ...(DEMO_MODE ? { opacity: 0.4, cursor: "not-allowed" } : {}) }}
-              onDragOver={DEMO_MODE ? undefined : (e) => { e.preventDefault(); setIsDragging(true); }}
-              onDragLeave={DEMO_MODE ? undefined : () => setIsDragging(false)}
-              onDrop={DEMO_MODE ? undefined : onDrop}
-              onClick={DEMO_MODE ? undefined : () => fileInputRef.current?.click()}
-              title={DEMO_MODE ? "Demo mode - disabled" : undefined}
+              style={{ padding: "28px 24px", textAlign: "center" }}
+              onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
+              onDragLeave={() => setIsDragging(false)}
+              onDrop={onDrop}
+              onClick={() => fileInputRef.current?.click()}
             >
               <div style={{ fontSize: 20, marginBottom: 8, color: "var(--muted)" }}>up</div>
               <div style={{ fontSize: 14, fontWeight: 500, marginBottom: 4 }}>Or drop an existing CSV</div>
               <div style={{ fontSize: 12, color: "var(--muted)" }}>to load previously exported leads</div>
             </div>
-            <input ref={fileInputRef} type="file" accept=".csv" multiple disabled={DEMO_MODE} style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+            <input ref={fileInputRef} type="file" accept=".csv" multiple style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
           </div>
         </div>
       </>
@@ -1096,11 +1177,17 @@ export default function LeadsPage({
             >←</Link>
             <div>
               <div style={{ fontFamily: "var(--font-mono)", fontSize: 10, color: "var(--green)", letterSpacing: "0.06em", marginBottom: 2 }}>LEAD SCRAPER</div>
-              <h1 data-cy="leads-page-title" style={{ fontSize: isMobile ? 16 : 20, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1 }}>{title}</h1>
+              <LeadsPageTitle country={country} isMobile={isMobile} />
             </div>
           </div>
           <div style={{ display: "flex", gap: 8, alignItems: "center", flexShrink: 0, flexWrap: "wrap" }}>
-            {isAU && !isMobile && <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />}
+            {hasMap && !isMobile && (
+              <ViewToggle
+                viewMode={viewMode}
+                setViewMode={setViewMode}
+                mapPath={mapPath}
+              />
+            )}
             {!isMobile && leads.length > 0 && (
               <span style={{ fontFamily: "var(--font-mono)", fontSize: 12, color: "var(--muted)" }}>
                 {filtered.length.toLocaleString()} of {activeLeads.length.toLocaleString()} leads
@@ -1128,15 +1215,15 @@ export default function LeadsPage({
           </div>
         </header>
 
-        {/* Demo banner */}
-        {DEMO_MODE && !bannerDismissed && (
-          <DemoBanner onDismiss={() => setBannerDismissed(true)} />
-        )}
-
         {/* Mobile view toggle */}
-        {isAU && isMobile && (
+        {hasMap && isMobile && (
           <div style={{ marginBottom: 16 }}>
-            <ViewToggle viewMode={viewMode} setViewMode={setViewMode} />
+            <ViewToggle
+              viewMode={viewMode}
+              setViewMode={setViewMode}
+              mapPath={mapPath}
+              showCoverage={isAU}
+            />
           </div>
         )}
 
@@ -1166,7 +1253,7 @@ export default function LeadsPage({
         />
 
         {/* Enrichment bar */}
-        <div className="enrich-bar" data-cy="enrichment-bar">
+        <div className="enrich-bar">
           <div>
             <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 3 }}>
               AI Enrichment + {businessIdLabel} Lookup
@@ -1191,12 +1278,6 @@ export default function LeadsPage({
             )}
             {bulkRunning ? (
               <button onClick={cancelEnrich} style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--red)", borderRadius: 7, padding: "7px 14px", fontSize: 13 }}>Cancel</button>
-            ) : DEMO_MODE ? (
-              <DemoDisabled>
-                <button style={{ background: "var(--green)", color: "#0a0a0b", fontWeight: 600, fontSize: 13, padding: "8px 16px", borderRadius: 7, display: "flex", alignItems: "center", gap: 7 }}>
-                  Enrich all leads
-                </button>
-              </DemoDisabled>
             ) : (
               <button data-cy="enrich-all-button" onClick={enrichAll} disabled={!leads.length} style={{ background: "var(--green)", color: "#0a0a0b", fontWeight: 600, fontSize: 13, padding: "8px 16px", borderRadius: 7, display: "flex", alignItems: "center", gap: 7 }}>
                 Enrich all leads
@@ -1221,20 +1302,14 @@ export default function LeadsPage({
           </div>
         )}
 
-        {/* Coverage view (AU only) */}
-        {isAU && viewMode === "coverage" && (
-          <CoverageView leads={leads} onAreaClick={handleCoverageAreaClick} />
-        )}
-
         {/* Leads view */}
         {viewMode === "leads" && (
           <>
             {/* Toolbar */}
             <div className="toolbar">
               <input
-                data-cy="lead-search-input"
                 type="text"
-                placeholder="Search by name, area, email, phone..."
+                placeholder={leads.length ? `Search ${leads.length.toLocaleString()} leads...` : "Search leads..."}
                 value={search}
                 onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                 style={{ flex: "1 1 200px", width: "auto", fontSize: 14, padding: "9px 14px" }}
@@ -1247,16 +1322,30 @@ export default function LeadsPage({
                   </option>
                 ))}
               </select>
-              <select value={filterState} onChange={(e) => { setFilterState(e.target.value); setPage(1); }} disabled={!leads.length}
-                style={{ width: "auto", flex: "0 1 auto" }}>
+              <select
+                value={filterState}
+                onChange={(e) => {
+                  const state = e.target.value;
+                  setFilterState(state);
+                  setFilterArea((prev) => {
+                    if (!prev || !state) return prev;
+                    if (country === "AU" && AU_AREAS[prev]?.state !== state) return "";
+                    if (country === "NZ" && NZ_AREAS[prev]?.region !== state) return "";
+                    return prev;
+                  });
+                  setPage(1);
+                }}
+                disabled={!leads.length}
+                style={{ width: "auto", flex: "0 1 auto" }}
+              >
                 <option value="">All {regionLabel.toLowerCase()}s</option>
                 {allStates.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
-              {isAU && (
+              {hasMap && (
                 <select value={filterArea} onChange={(e) => { setFilterArea(e.target.value); setPage(1); }} disabled={!leads.length}
-                  style={{ width: "auto", flex: "0 1 auto", borderColor: filterArea ? 'var(--green)' : undefined, color: filterArea ? 'var(--green)' : undefined }}>
+                  style={{ width: "auto", flex: "0 1 auto", borderColor: filterArea ? "var(--green)" : undefined, color: filterArea ? "var(--green)" : undefined }}>
                   <option value="">All areas</option>
-                  {AU_AREA_GROUPS.map((group) => (
+                  {visibleAreaGroups.map((group) => (
                     <optgroup key={group.label} label={group.label}>
                       {group.areas.map((area) => (
                         <option key={area} value={area}>{area}</option>
@@ -1273,11 +1362,11 @@ export default function LeadsPage({
               {leads.length > 0 && (
                 <button onClick={() => { setHideExcluded((h) => !h); setPage(1); }}
                   style={{ background: hideExcluded ? "var(--surface2)" : "transparent", border: `1px solid ${hideExcluded ? "var(--border2)" : "var(--border)"}`, color: hideExcluded ? "var(--text)" : "var(--muted)", borderRadius: 6, padding: "9px 14px", fontSize: 12, cursor: "pointer", whiteSpace: "nowrap", flexShrink: 0 }}>
-                  {hideExcluded ? "Excluded: Hidden" : "Excluded: Shown"}
+                  {hideExcluded ? "✓ Hide excluded" : "Show excluded"}
                 </button>
               )}
               {hasActiveFilters && (
-                <button onClick={() => { setSearch(""); setFilterState(""); setFilterCategory(""); setFilterScore(0); setFilterArea(''); setPage(1); }}
+                <button onClick={() => { setSearch(""); setFilterState(""); setFilterCategory(""); setFilterScore(0); setFilterSource(""); setFilterArea(""); setPage(1); }}
                   style={{ background: "var(--surface2)", border: "1px solid var(--border)", color: "var(--muted)", borderRadius: 6, padding: "9px 14px", fontSize: 13, flexShrink: 0 }}>
                   Clear
                 </button>
@@ -1296,9 +1385,6 @@ export default function LeadsPage({
                         <div key={col.key} className="col-row" onClick={() => toggleCol(col.key)}>
                           <div className={`col-check ${col.visible ? "on" : ""}`}>{col.visible && "✓"}</div>
                           {col.label}
-                          {["linkedin_company","linkedin_personal","instagram","abn","entity_type"].includes(col.key) && (
-                            <span style={{ marginLeft: "auto", fontSize: 10, color: "#a78bfa", background: "rgba(167,139,250,0.1)", borderRadius: 4, padding: "1px 5px" }}>new</span>
-                          )}
                         </div>
                       ))}
                       <div style={{ borderTop: "1px solid var(--border)", marginTop: 8, paddingTop: 8 }}>
@@ -1308,36 +1394,45 @@ export default function LeadsPage({
                   )}
                 </div>
               )}
-              {DEMO_MODE ? (
-                <DemoDisabled>
-                  <button style={{
-                    background: "var(--surface2)", border: "1px solid var(--border)",
-                    color: "var(--text)", borderRadius: 6, padding: "9px 14px", fontSize: 13,
-                    display: "flex", alignItems: "center", gap: 6, whiteSpace: "nowrap",
-                  }}>
-                    {isMobile ? "Add CSVs" : "Add more CSVs"}
-                  </button>
-                </DemoDisabled>
-              ) : (
-                <button
-                  onClick={bulkRunning ? undefined : () => fileInputRef.current?.click()}
-                  title={bulkRunning ? "Disabled during enrichment" : undefined}
+              <button
+                onClick={bulkRunning ? undefined : () => fileInputRef.current?.click()}
+                title={bulkRunning ? "Disabled during enrichment" : undefined}
+                style={{
+                  background: "var(--surface2)", border: "1px solid var(--border)",
+                  color: bulkRunning ? "var(--muted)" : "var(--text)",
+                  borderRadius: 6, padding: "9px 14px", fontSize: 13,
+                  display: "flex", alignItems: "center", gap: 6,
+                  whiteSpace: "nowrap", flexShrink: 0,
+                  opacity: bulkRunning ? 0.4 : 1,
+                  pointerEvents: bulkRunning ? "none" : undefined,
+                  cursor: bulkRunning ? "not-allowed" : "pointer",
+                }}>
+                {isMobile ? "Add CSVs" : "Add more CSVs"}
+              </button>
+              <input ref={fileInputRef} type="file" accept=".csv" multiple disabled={bulkRunning} style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
+            </div>
+
+            {/* Back to map link - shown when area filter came from the map page */}
+            {hasMap && filterArea && !isMobile && (
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
+                <a
+                  href={mapPath}
                   style={{
                     background: "var(--surface2)", border: "1px solid var(--border)",
-                    color: bulkRunning ? "var(--muted)" : "var(--text)",
-                    borderRadius: 6, padding: "9px 14px", fontSize: 13,
-                    display: "flex", alignItems: "center", gap: 6,
-                    whiteSpace: "nowrap", flexShrink: 0,
-                    opacity: bulkRunning ? 0.4 : 1,
-                    pointerEvents: bulkRunning ? "none" : undefined,
-                    cursor: bulkRunning ? "not-allowed" : "pointer",
-                  }}>
-                  {isMobile ? "Add CSVs" : "Add more CSVs"}
-                </button>
-              )}
-              <input ref={fileInputRef} type="file" accept=".csv" multiple disabled={DEMO_MODE || bulkRunning} style={{ display: "none" }} onChange={(e) => handleFiles(e.target.files)} />
-
-            </div>
+                    color: "var(--muted)", borderRadius: 6, padding: "5px 12px",
+                    fontSize: 12, cursor: "pointer", display: "flex", alignItems: "center", gap: 6,
+                    textDecoration: "none", transition: "border-color 0.15s, color 0.15s",
+                  }}
+                  onMouseOver={(e) => { e.currentTarget.style.borderColor = "var(--border2)"; e.currentTarget.style.color = "var(--text)"; }}
+                  onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.color = "var(--muted)"; }}
+                >
+                  ← Back to map
+                </a>
+                <span style={{ fontSize: 12, color: "var(--muted)" }}>
+                  Showing leads for <strong style={{ color: "var(--text)" }}>{filterArea}</strong>
+                </span>
+              </div>
+            )}
 
             {/* Advanced filters */}
             <div style={{ marginBottom: 12 }}>
@@ -1362,7 +1457,7 @@ export default function LeadsPage({
                   {filterArea && (
                     <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(62,207,142,0.1)", border: "1px solid rgba(62,207,142,0.25)", borderRadius: 6, padding: "5px 10px", fontSize: 12 }}>
                       <span style={{ color: "var(--green)" }}>Area: {filterArea}</span>
-                      <button onClick={() => { setFilterArea(''); setPage(1); }}
+                      <button onClick={() => { setFilterArea(""); setPage(1); }}
                         style={{ background: "none", border: "none", color: "var(--muted)", cursor: "pointer", fontSize: 13, padding: 0, lineHeight: 1 }}>✕</button>
                     </div>
                   )}
@@ -1448,18 +1543,27 @@ export default function LeadsPage({
                     const isResearching = !!researching[lead.title];
                     const isResearchOpen = !!researchOpen[lead.title];
                     const isExcluded    = lead._category === "EXCLUDED";
+                    const isLeadTaken   = hasMap && takenLeads.includes(lead.title);
                     const hasWebsite    = !!lead.website;
                     const hasResearch   = !!lead._research && !lead._research.error;
                     const colSpan       = visibleCols.length + 1;
 
                     return (
                       <React.Fragment key={i}>
-                        <tr data-cy="lead-row" data-lead-title={lead.title} className={isExcluded ? "excluded" : ""}>
+                        <tr data-cy="lead-row" data-lead-title={lead.title} className={isExcluded ? "excluded" : ""}
+                          style={isLeadTaken ? { opacity: 0.45 } : undefined}>
                           {visibleCols.map(({ key }) => {
                             if (key === "_score") return <td key={key} style={{ textAlign: "center" }}><ScorePill score={lead._score} /></td>;
                             if (key === "title") return (
                               <td key={key} title={lead.title} style={{ fontWeight: 500 }}>
-                                {lead.title}
+                                {hasMap ? (
+                                  <button
+                                    onClick={() => setModalLead(lead)}
+                                    style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontWeight: 500, padding: 0, textAlign: "left", fontSize: "inherit", textDecorationLine: "underline", textDecorationStyle: "solid", textDecorationColor: "transparent", transition: "text-decoration-color 0.15s" }}
+                                    onMouseOver={(e) => (e.currentTarget.style.textDecorationColor = "var(--muted)")}
+                                    onMouseOut={(e) => (e.currentTarget.style.textDecorationColor = "transparent")}
+                                  >{lead.title}</button>
+                                ) : lead.title}
                                 {hasResearch && (
                                   <span style={{ marginLeft: 6, fontSize: 9, fontWeight: 700, padding: "1px 6px", borderRadius: 4, background: "rgba(167,139,250,0.15)", color: "var(--purple)", textTransform: "uppercase", letterSpacing: "0.05em", verticalAlign: "middle", whiteSpace: "nowrap" }}>
                                     Researched
@@ -1491,15 +1595,28 @@ export default function LeadsPage({
                             if (key === "instagram") return <td key={key}><SocialLink url={lead.instagram} type="instagram" /></td>;
                             if (key === "abn") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11, whiteSpace: "nowrap" }}>{lead.abn || <span style={{ color: "var(--muted)" }}>---</span>}</td>;
                             if (key === "entity_type") return <td key={key} style={{ fontSize: 11 }}>{lead.entity_type || <span style={{ color: "var(--muted)" }}>---</span>}</td>;
-                            if (key === "totalScore") {
-                              const r = lead[key] ? parseFloat(lead[key]) : null;
-                              const ratingColor = (theme === "dark" && r !== null)
-                                ? (r >= 4 ? "var(--green)" : r >= 3 ? "var(--instagram-color)" : "#f08080")
-                                : undefined;
-                              return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: ratingColor }}>{lead[key] || "---"}</td>;
+                            if (key === "totalScore") return (
+                              <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>
+                                {lead.totalScore
+                                  ? <span style={{ color: getGoogleRatingColor(lead.totalScore) }}>{formatGoogleRating(lead.totalScore)}</span>
+                                  : "---"}
+                              </td>
+                            );
+                            if (key === "reviewsCount") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{lead.reviewsCount || "---"}</td>;
+                            if (hasMap && key === "city") {
+                              return (
+                                <td key={key}>
+                                  <MapLink href={getMapUrlForLead(lead, { country })}>{lead.city}</MapLink>
+                                </td>
+                              );
                             }
-                            if (key === "reviewsCount") return <td key={key} style={{ fontFamily: "var(--font-mono)", fontSize: 11 }}>{lead[key] || "---"}</td>;
-                            if (key === "city" || key === "state") return <td key={key} style={{ color: "var(--city-color)" }}>{lead[key] || "---"}</td>;
+                            if (hasMap && key === "state") {
+                              return (
+                                <td key={key}>
+                                  <MapLink href={getMapUrlForLead(lead, { stateOnly: true, country })}>{lead.state}</MapLink>
+                                </td>
+                              );
+                            }
                             return <td key={key}>{lead[key] || "---"}</td>;
                           })}
 
@@ -1508,80 +1625,66 @@ export default function LeadsPage({
                             <div style={{ display: "flex", gap: 5, alignItems: "center" }}>
                               {/* Enrich button */}
                               {!isExcluded && (
-                                DEMO_MODE ? (
-                                  <DemoDisabled>
-                                    <button style={{ background: "none", border: "1px solid var(--border)", color: "var(--muted)", borderRadius: 5, padding: "4px 8px", fontSize: 11, cursor: "default", display: "flex", alignItems: "center", gap: 4 }}>✦</button>
-                                  </DemoDisabled>
-                                ) : (
-                                  <button
-                                    data-cy="lead-enrich-button"
-                                    onClick={isEnriching || (bulkRunning && !isEnriching) ? undefined : () => enrichOne(lead)}
-                                    disabled={isEnriching || (bulkRunning && !isEnriching)}
-                                    title={bulkRunning && !isEnriching ? "Disabled during bulk enrichment" : "Enrich with AI + ABN"}
-                                    style={{
-                                      background: "none", border: "1px solid var(--border)",
-                                      color: isEnriching ? "var(--green)" : "var(--muted)",
-                                      borderRadius: 5, padding: "4px 8px", fontSize: 11,
-                                      cursor: isEnriching ? "default" : bulkRunning ? "not-allowed" : "pointer",
-                                      display: "flex", alignItems: "center", gap: 4,
-                                      opacity: bulkRunning && !isEnriching ? 0.3 : 1,
-                                      pointerEvents: bulkRunning && !isEnriching ? "none" : undefined,
-                                    }}
-                                    onMouseOver={(e) => { if (!isEnriching && !bulkRunning) e.currentTarget.style.borderColor = "var(--green)"; }}
-                                    onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}>
-                                    {isEnriching ? <Spinner /> : "✦"}
-                                  </button>
-                                )
+                                <button
+                                  onClick={isEnriching || (bulkRunning && !isEnriching) ? undefined : () => enrichOne(lead)}
+                                  disabled={isEnriching || (bulkRunning && !isEnriching)}
+                                  title={bulkRunning && !isEnriching ? "Disabled during bulk enrichment" : "Enrich with AI + ABN"}
+                                  style={{
+                                    background: "none", border: "1px solid var(--border)",
+                                    color: isEnriching ? "var(--green)" : "var(--muted)",
+                                    borderRadius: 5, padding: "4px 8px", fontSize: 11,
+                                    cursor: isEnriching ? "default" : bulkRunning ? "not-allowed" : "pointer",
+                                    display: "flex", alignItems: "center", gap: 4,
+                                    opacity: bulkRunning && !isEnriching ? 0.3 : 1,
+                                    pointerEvents: bulkRunning && !isEnriching ? "none" : undefined,
+                                  }}
+                                  onMouseOver={(e) => { if (!isEnriching && !bulkRunning) e.currentTarget.style.borderColor = "var(--green)"; }}
+                                  onMouseOut={(e) => { e.currentTarget.style.borderColor = "var(--border)"; }}>
+                                  {isEnriching ? <Spinner /> : "✦"}
+                                </button>
                               )}
 
                               {/* Research button */}
-                              {DEMO_MODE ? (
-                                <DemoDisabled>
-                                  <button style={{ background: "none", border: "1px solid var(--border)", color: "var(--muted)", borderRadius: 5, padding: "4px 8px", fontSize: 12, cursor: "default", display: "flex", alignItems: "center", gap: 4, opacity: hasWebsite ? 1 : 0.35 }}>🔍</button>
-                                </DemoDisabled>
-                              ) : (
-                                <button
-                                  data-cy="lead-research-button"
-                                  onClick={bulkRunning ? undefined : () => researchOne(lead)}
-                                  disabled={isResearching || !hasWebsite || bulkRunning}
-                                  title={
-                                    bulkRunning
-                                      ? "Disabled during bulk enrichment"
-                                      : !hasWebsite
-                                        ? "No website - cannot research"
-                                        : hasResearch
-                                          ? isResearchOpen ? "Close research panel" : "View deep research"
-                                          : "Deep research - summarise what this business does (uses GPT-4o)\n~$0.03 per lead - use for high-priority leads only"
+                              <button
+                                onClick={bulkRunning ? undefined : () => researchOne(lead)}
+                                disabled={isResearching || !hasWebsite || bulkRunning}
+                                title={
+                                  bulkRunning
+                                    ? "Disabled during bulk enrichment"
+                                    : !hasWebsite
+                                      ? "No website - cannot research"
+                                      : hasResearch
+                                        ? isResearchOpen ? "Close research panel" : "View deep research"
+                                        : "Deep research - summarise what this business does (uses GPT-4o)\n~$0.03 per lead - use for high-priority leads only"
+                                }
+                                style={{
+                                  background: hasResearch ? "rgba(167,139,250,0.1)" : "none",
+                                  border: `1px solid ${hasResearch ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
+                                  color: isResearching
+                                    ? "var(--purple)"
+                                    : hasWebsite
+                                      ? hasResearch ? "var(--purple)" : "var(--muted)"
+                                      : "var(--border)",
+                                  borderRadius: 5, padding: "4px 8px", fontSize: 12,
+                                  cursor: bulkRunning ? "not-allowed" : hasWebsite ? "pointer" : "not-allowed",
+                                  display: "flex", alignItems: "center", gap: 4,
+                                  opacity: bulkRunning ? 0.3 : hasWebsite ? 1 : 0.35,
+                                  pointerEvents: bulkRunning ? "none" : undefined,
+                                  transition: "border-color 0.15s, background 0.15s",
+                                }}
+                                onMouseOver={(e) => {
+                                  if (hasWebsite && !isResearching && !bulkRunning) {
+                                    e.currentTarget.style.borderColor = "var(--purple)";
                                   }
-                                  style={{
-                                    background: hasResearch ? "rgba(167,139,250,0.1)" : "none",
-                                    border: `1px solid ${hasResearch ? "rgba(167,139,250,0.4)" : "var(--border)"}`,
-                                    color: isResearching
-                                      ? "var(--purple)"
-                                      : hasWebsite
-                                        ? hasResearch ? "var(--purple)" : "var(--muted)"
-                                        : "var(--border)",
-                                    borderRadius: 5, padding: "4px 8px", fontSize: 12,
-                                    cursor: bulkRunning ? "not-allowed" : hasWebsite ? "pointer" : "not-allowed",
-                                    display: "flex", alignItems: "center", gap: 4,
-                                    opacity: bulkRunning ? 0.3 : hasWebsite ? 1 : 0.35,
-                                    pointerEvents: bulkRunning ? "none" : undefined,
-                                    transition: "border-color 0.15s, background 0.15s",
-                                  }}
-                                  onMouseOver={(e) => {
-                                    if (hasWebsite && !isResearching && !bulkRunning) {
-                                      e.currentTarget.style.borderColor = "var(--purple)";
-                                    }
-                                  }}
-                                  onMouseOut={(e) => {
-                                    e.currentTarget.style.borderColor = hasResearch
-                                      ? "rgba(167,139,250,0.4)"
-                                      : "var(--border)";
-                                  }}
-                                >
-                                  {isResearching ? <Spinner /> : "🔍"}
-                                </button>
-                              )}
+                                }}
+                                onMouseOut={(e) => {
+                                  e.currentTarget.style.borderColor = hasResearch
+                                    ? "rgba(167,139,250,0.4)"
+                                    : "var(--border)";
+                                }}
+                              >
+                                {isResearching ? <Spinner /> : "🔍"}
+                              </button>
                             </div>
                           </td>
                         </tr>
@@ -1625,6 +1728,21 @@ export default function LeadsPage({
         )}
 
       </div>
+
+      {modalLead && (
+        <LeadModal
+          lead={modalLead}
+          takenLeads={takenLeads}
+          onMarkLead={handleMarkLead}
+          onClose={() => setModalLead(null)}
+          country={country}
+          theme={theme}
+        />
+      )}
+
+      {demoNotice && (
+        <DemoNoticeCard feature={demoNotice} onClose={() => setDemoNotice(null)} />
+      )}
     </>
   );
 }

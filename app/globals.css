@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
 /* Removed invalid @source at-rule which caused a warning. If you need to include
   Tailwind's layers, use @tailwind base; @tailwind components; @tailwind utilities;
   or configure the content paths in your tailwind.config.js instead. */
@@ -18,11 +19,15 @@
   --purple:    #a78bfa;
   --font-sans:       system-ui, -apple-system, sans-serif;
   --font-mono:       ui-monospace, 'SF Mono', monospace;
+  --link-blue:       #92c8ff;
   --email-color:     var(--green);
-  --linkedin-color:  #a9d1ffe5;
+  --linkedin-color:  var(--link-blue);
   --website-color:   #ffffff;
-  --instagram-color: #f0b060;
-  --city-color:      #d9daf8;
+  --instagram-color: #f5c878;
+  --city-color:      #c8c5dc;
+  --rating-high:     var(--green);
+  --rating-mid:      var(--instagram-color);
+  --rating-low:      var(--red);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -232,11 +237,14 @@ html[data-theme="light"] {
   --amber:        #a86200;
   --red:          #be2e2e;
   --blue:            #1860b0;
-  --email-color:     var(--color-green-700);
-  --linkedin-color:  #0a66c2;
+  --email-color:     #0a6840;
+  --linkedin-color:  #1860b0;
   --website-color:   black;
-  --instagram-color: #6d28d9;
-  --city-color:      #1425be;
+  --instagram-color: #5b21b6;
+  --city-color:      #5b21b6;
+  --rating-high:     #0a6840;
+  --rating-mid:      #a86200;
+  --rating-low:      var(--red);
 }
 
 html[data-theme="light"] body {

@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { classify } from "@/lib/processor";
-import { AU_AREA_GROUPS, AU_AREA_NAMES } from "@/lib/au-areas";
-import { DEMO_MODE, DemoDisabled } from "@/app/components/DemoDisabled";
+import { AU_AREA_NAMES, AU_STATE_NAMES, getAreaGroupsForState, getAreasForState } from "@/lib/au-areas";
+import { NZ_AREA_NAMES } from "@/lib/nz-areas";
+import { DEMO_MODE, DemoNoticeCard } from "@/app/components/DemoDisabled";
 
 // Country template → page route
 const TEMPLATE_ROUTES = { AU: "/au", NZ: "/nz" };
@@ -23,7 +24,7 @@ export const TEMPLATES = {
       "Property Advisor",
       "Property Acquisition",
       "Property Strategist",
-      "Off The Plan Buyers Agent",
+      "Off the Plan Buyers Agent",
       "Buyers Agent First Home",
     ],
     cities: AU_AREA_NAMES,
@@ -42,11 +43,7 @@ export const TEMPLATES = {
       "Property Consultant",
       "Buyers Agent Residential",
     ],
-    cities: [
-      "Auckland", "Wellington", "Christchurch", "Hamilton",
-      "Tauranga", "Dunedin", "Palmerston North", "Nelson",
-      "Rotorua", "New Plymouth",
-    ],
+    cities: NZ_AREA_NAMES,
   },
 };
 
@@ -62,7 +59,7 @@ function PreviewTable({ newLeads, onViewInTable }) {
   const overflow = newLeads.length - display.length;
 
   return (
-    <div data-cy="scrape-preview" style={{ marginTop: 12 }}>
+    <div style={{ marginTop: 12 }}>
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
         marginBottom: 8,
@@ -72,7 +69,6 @@ function PreviewTable({ newLeads, onViewInTable }) {
         </div>
         {onViewInTable && (
           <button
-            data-cy="view-in-table"
             onClick={onViewInTable}
             style={{
               background: "none", border: "1px solid var(--border)",
@@ -184,7 +180,8 @@ export default function ScrapePanel({
   const [customTerm, setCustomTerm] = useState("buyers agent");
   const [useCustomInput, setUseCustomInput] = useState(false);
 
-  // City state
+  // City / state state
+  const [scrapeState, setScrapeState] = useState("");
   const [templateCity, setTemplateCity] = useState(
     () => TEMPLATES[initTemplate].cities[0]
   );
@@ -217,12 +214,42 @@ export default function ScrapePanel({
 
   // Run-all-terms warning (AU has 101 areas × 10 terms = 1010 calls)
   const [showRunAllConfirm, setShowRunAllConfirm] = useState(false);
+  const [demoNotice, setDemoNotice] = useState(null);
+
+  const isAU = templateKey === "AU";
+
+  const allAreasList = useMemo(() => {
+    if (isCustom) return cities || [];
+    return isAU ? AU_AREA_NAMES : NZ_AREA_NAMES;
+  }, [isCustom, isAU, cities]);
+
+  const visibleAreaGroups = useMemo(
+    () => (isAU ? getAreaGroupsForState(scrapeState) : []),
+    [isAU, scrapeState]
+  );
+  const filteredAUCities = useMemo(
+    () => (isAU ? getAreasForState(scrapeState) : []),
+    [isAU, scrapeState]
+  );
 
   // Derived
   const activeTerm = isCustom ? customTerm : templateTerm;
-  const activeCities = isCustom ? (cities || []) : (template?.cities || []);
+  const activeCities = isCustom
+    ? (cities || [])
+    : allCities
+      ? allAreasList
+      : isAU
+        ? filteredAUCities
+        : (template?.cities || NZ_AREA_NAMES);
   const activeCity = isCustom ? customCity : templateCity;
   const isRunning = scraping || allTermsRunning;
+
+  // Keep selected area valid when state filter changes
+  useEffect(() => {
+    if (!isAU || isCustom) return;
+    if (templateCity && filteredAUCities.includes(templateCity)) return;
+    if (filteredAUCities[0]) setTemplateCity(filteredAUCities[0]);
+  }, [isAU, isCustom, scrapeState, filteredAUCities, templateCity]);
 
   function handleTemplateChange(key) {
     if (TEMPLATE_ROUTES[key] && key !== country) {
@@ -239,6 +266,7 @@ export default function ScrapePanel({
     setRunSummary(null);
     setRunTotals(null);
     setAllCities(false);
+    setScrapeState("");
     setUseCustomInput(false);
     setNewLeadsPreview(null);
     setShowRunAllConfirm(false);
@@ -260,6 +288,10 @@ export default function ScrapePanel({
   }
 
   async function handleScrape() {
+    if (DEMO_MODE) {
+      setDemoNotice("scrape");
+      return;
+    }
     const term = activeTerm?.trim();
     if (!term) return;
     setScraping(true);
@@ -308,8 +340,13 @@ export default function ScrapePanel({
   }
 
   async function handleRunAllTerms() {
+    if (DEMO_MODE) {
+      setDemoNotice("scrape");
+      return;
+    }
     if (!template) return;
-    const { terms, cities: termCities } = template;
+    const { terms } = template;
+    const termCities = isAU ? AU_AREA_NAMES : NZ_AREA_NAMES;
 
     setAllTermsRunning(true);
     setScraping(false);
@@ -375,13 +412,13 @@ export default function ScrapePanel({
   }
 
   // How many total API calls for "Run all terms"
-  const runAllCallCount = template ? template.terms.length * template.cities.length : 0;
-  const isAU = templateKey === "AU";
+  const runAllAreaCount = isAU ? AU_AREA_NAMES.length : NZ_AREA_NAMES.length;
+  const runAllCallCount = template ? template.terms.length * runAllAreaCount : 0;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <div data-cy="scrape-panel" style={{
+    <div style={{
       background: "var(--surface)",
       border: "1px solid var(--border)",
       borderRadius: 10,
@@ -390,7 +427,6 @@ export default function ScrapePanel({
     }}>
       {/* ── Header / toggle ── */}
       <div
-        data-cy="scrape-panel-toggle"
         onClick={() => !isRunning && !disabled && setOpen((o) => !o)}
         title={disabled ? "Scraping disabled during enrichment" : undefined}
         style={{
@@ -449,7 +485,6 @@ export default function ScrapePanel({
               Country
             </div>
             <select
-              data-cy="country-select"
               value={templateKey}
               onChange={(e) => handleTemplateChange(e.target.value)}
               disabled={isRunning}
@@ -471,7 +506,6 @@ export default function ScrapePanel({
                   Search term
                 </div>
                 <input
-                  data-cy="search-term-input"
                   type="text"
                   value={customTerm}
                   onChange={(e) => setCustomTerm(e.target.value)}
@@ -486,7 +520,6 @@ export default function ScrapePanel({
                   Search term
                 </div>
                 <select
-                  data-cy="search-term-select"
                   value={templateTerm}
                   onChange={(e) => setTemplateTerm(e.target.value)}
                   disabled={isRunning}
@@ -494,6 +527,26 @@ export default function ScrapePanel({
                 >
                   {template.terms.map((t) => (
                     <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+            )}
+
+            {/* State selector - AU only, hidden when all areas toggled */}
+            {isAU && !allCities && (
+              <div style={{ flex: "0 1 180px", opacity: scraping ? 0.4 : 1, pointerEvents: scraping ? "none" : "auto", transition: "opacity 0.2s ease" }}>
+                <div style={{ fontSize: 11, color: "var(--muted)", marginBottom: 5, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  State / Territory
+                </div>
+                <select
+                  value={scrapeState}
+                  onChange={(e) => setScrapeState(e.target.value)}
+                  disabled={isRunning}
+                  style={{ width: "100%" }}
+                >
+                  <option value="">All states</option>
+                  {AU_STATE_NAMES.map((s) => (
+                    <option key={s} value={s}>{s}</option>
                   ))}
                 </select>
               </div>
@@ -507,7 +560,6 @@ export default function ScrapePanel({
                 </div>
                 {isCustom ? (
                   <select
-                    data-cy="area-select"
                     value={customCity}
                     onChange={(e) => setCustomCity(e.target.value)}
                     disabled={isRunning}
@@ -518,15 +570,13 @@ export default function ScrapePanel({
                     ))}
                   </select>
                 ) : isAU ? (
-                  /* AU: grouped by state with optgroups */
                   <select
-                    data-cy="area-select"
                     value={templateCity}
                     onChange={(e) => setTemplateCity(e.target.value)}
                     disabled={isRunning}
                     style={{ width: "100%" }}
                   >
-                    {AU_AREA_GROUPS.map((group) => (
+                    {visibleAreaGroups.map((group) => (
                       <optgroup key={group.label} label={group.label}>
                         {group.areas.map((area) => (
                           <option key={area} value={area}>{area}</option>
@@ -537,7 +587,6 @@ export default function ScrapePanel({
                 ) : (
                   /* NZ: flat list */
                   <select
-                    data-cy="area-select"
                     value={templateCity}
                     onChange={(e) => setTemplateCity(e.target.value)}
                     disabled={isRunning}
@@ -557,7 +606,6 @@ export default function ScrapePanel({
                 Max / area
               </div>
               <select
-                data-cy="max-results-select"
                 value={maxResults}
                 onChange={(e) => setMaxResults(Number(e.target.value))}
                 disabled={isRunning}
@@ -574,7 +622,6 @@ export default function ScrapePanel({
             <div style={{ flex: "0 0 auto", display: "flex", alignItems: "flex-end", gap: 8, flexWrap: "wrap" }}>
               {/* All areas toggle */}
               <button
-                data-cy="all-areas-button"
                 onClick={() => setAllCities((a) => !a)}
                 disabled={isRunning}
                 style={{
@@ -595,55 +642,42 @@ export default function ScrapePanel({
               </button>
 
               {/* Scrape button - only ever starts a scrape, never cancels */}
-              {DEMO_MODE ? (
-                <DemoDisabled>
-                  <button style={{
-                    background: "var(--green)", color: "#0a0a0b", fontWeight: 600, fontSize: 13,
-                    padding: "9px 20px", borderRadius: 7, display: "flex", alignItems: "center",
-                    gap: 7, border: "none", whiteSpace: "nowrap",
-                  }}>
-                    {allCities ? `⬇ Scrape all ${activeCities.length} areas` : "⬇ Scrape leads"}
-                  </button>
-                </DemoDisabled>
-              ) : (
-                <button
-                  data-cy="scrape-button"
-                  onClick={handleScrape}
-                  disabled={isRunning || !activeTerm?.trim()}
-                  style={{
-                    background: isRunning ? "var(--surface2)" : "var(--green)",
-                    color: isRunning ? "var(--muted)" : "#0a0a0b",
-                    fontWeight: 600,
-                    fontSize: 13,
-                    padding: "9px 20px",
-                    borderRadius: 7,
-                    cursor: isRunning || !activeTerm?.trim() ? "not-allowed" : "pointer",
-                    opacity: isRunning || !activeTerm?.trim() ? 0.55 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 7,
-                    border: "none",
-                    whiteSpace: "nowrap",
-                    transition: "all 0.15s",
-                  }}
-                >
-                  {scraping && !allTermsRunning ? (
-                    <>
-                      <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: "spin 0.8s linear infinite", flexShrink: 0 }}>
-                        <circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
-                      </svg>
-                      Scraping…
-                    </>
-                  ) : allCities
-                    ? `⬇ Scrape all ${activeCities.length} areas`
-                    : "⬇ Scrape leads"}
-                </button>
-              )}
+              <button
+                data-cy="scrape-button"
+                onClick={handleScrape}
+                disabled={isRunning || !activeTerm?.trim()}
+                style={{
+                  background: isRunning ? "var(--surface2)" : "var(--green)",
+                  color: isRunning ? "var(--muted)" : "#0a0a0b",
+                  fontWeight: 600,
+                  fontSize: 13,
+                  padding: "9px 20px",
+                  borderRadius: 7,
+                  cursor: isRunning || !activeTerm?.trim() ? "not-allowed" : "pointer",
+                  opacity: isRunning || !activeTerm?.trim() ? 0.55 : 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 7,
+                  border: "none",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.15s",
+                }}
+              >
+                {scraping && !allTermsRunning ? (
+                  <>
+                    <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: "spin 0.8s linear infinite", flexShrink: 0 }}>
+                      <circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
+                    </svg>
+                    Scraping…
+                  </>
+                ) : allCities
+                  ? `⬇ Scrape all ${activeCities.length} areas`
+                  : "⬇ Scrape leads"}
+              </button>
 
               {/* Separate Cancel button - shown only while a single scrape is in progress */}
               {scraping && !allTermsRunning && (
                 <button
-                  data-cy="scrape-cancel-button"
                   onClick={handleCancel}
                   style={{
                     background: "var(--surface2)",
@@ -664,57 +698,47 @@ export default function ScrapePanel({
 
               {/* Run all terms (template mode only) */}
               {!isCustom && (
-                DEMO_MODE ? (
-                  <DemoDisabled>
-                    <button style={{
-                      background: "rgba(167,139,250,0.15)", color: "#a78bfa", fontWeight: 600,
-                      fontSize: 13, padding: "9px 16px", borderRadius: 7, display: "flex",
-                      alignItems: "center", gap: 7,
-                      border: "1px solid rgba(167,139,250,0.3)", whiteSpace: "nowrap",
-                    }}>
-                      ⚡ Run all {template.terms.length} terms
-                    </button>
-                  </DemoDisabled>
-                ) : (
-                  <button
-                    data-cy="run-all-terms-button"
-                    onClick={allTermsRunning ? handleCancel : () => {
-                      if (isAU) {
-                        setShowRunAllConfirm(true);
-                      } else {
-                        handleRunAllTerms();
-                      }
-                    }}
-                    disabled={!allTermsRunning && scraping}
-                    style={{
-                      background: allTermsRunning ? "var(--surface2)" : "rgba(167,139,250,0.15)",
-                      color: allTermsRunning ? "var(--red)" : "#a78bfa",
-                      fontWeight: 600,
-                      fontSize: 13,
-                      padding: "9px 16px",
-                      borderRadius: 7,
-                      cursor: (!allTermsRunning && scraping) ? "not-allowed" : "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 7,
-                      border: `1px solid ${allTermsRunning ? "var(--border)" : "rgba(167,139,250,0.3)"}`,
-                      whiteSpace: "nowrap",
-                      transition: "all 0.15s",
-                      opacity: !allTermsRunning && scraping ? 0.4 : 1,
-                    }}
-                  >
-                    {allTermsRunning ? (
-                      <>
-                        <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: "spin 0.8s linear infinite", flexShrink: 0 }}>
-                          <circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
-                        </svg>
-                        Cancel
-                      </>
-                    ) : (
-                      `⚡ Run all ${template.terms.length} terms`
-                    )}
-                  </button>
-                )
+                <button
+                  onClick={allTermsRunning ? handleCancel : () => {
+                    if (DEMO_MODE) {
+                      setDemoNotice("scrape");
+                      return;
+                    }
+                    if (isAU) {
+                      setShowRunAllConfirm(true);
+                    } else {
+                      handleRunAllTerms();
+                    }
+                  }}
+                  disabled={!allTermsRunning && scraping}
+                  style={{
+                    background: allTermsRunning ? "var(--surface2)" : "rgba(167,139,250,0.15)",
+                    color: allTermsRunning ? "var(--red)" : "#a78bfa",
+                    fontWeight: 600,
+                    fontSize: 13,
+                    padding: "9px 16px",
+                    borderRadius: 7,
+                    cursor: (!allTermsRunning && scraping) ? "not-allowed" : "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 7,
+                    border: `1px solid ${allTermsRunning ? "var(--border)" : "rgba(167,139,250,0.3)"}`,
+                    whiteSpace: "nowrap",
+                    transition: "all 0.15s",
+                    opacity: !allTermsRunning && scraping ? 0.4 : 1,
+                  }}
+                >
+                  {allTermsRunning ? (
+                    <>
+                      <svg width="12" height="12" viewBox="0 0 12 12" style={{ animation: "spin 0.8s linear infinite", flexShrink: 0 }}>
+                        <circle cx="6" cy="6" r="4.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="14 8" />
+                      </svg>
+                      Cancel
+                    </>
+                  ) : (
+                    `⚡ Run all ${template.terms.length} terms`
+                  )}
+                </button>
               )}
             </div>
           </div>
@@ -729,17 +753,16 @@ export default function ScrapePanel({
               marginBottom: 12,
             }}>
               <div style={{ fontSize: 13, fontWeight: 500, color: "#a78bfa", marginBottom: 6 }}>
-                ⚡ Run all {template?.terms.length} terms across {template?.cities.length} areas?
+                ⚡ Run all {template?.terms.length} terms across {runAllAreaCount} areas?
               </div>
               <div style={{ fontSize: 12, color: "var(--muted)", marginBottom: 12, lineHeight: 1.5 }}>
                 This will run <strong style={{ color: "var(--text)" }}>{template?.terms.length} search terms</strong> across{" "}
-                <strong style={{ color: "var(--text)" }}>{template?.cities.length} areas</strong> (~{runAllCallCount.toLocaleString()} searches).{" "}
-                Estimated time: <strong style={{ color: "var(--amber)" }}>2-3 hours</strong>.{" "}
+                <strong style={{ color: "var(--text)" }}>{runAllAreaCount} areas</strong> (~{runAllCallCount.toLocaleString()} searches).{" "}
+                Estimated time: <strong style={{ color: "var(--amber)" }}>2–3 hours</strong>.{" "}
                 Keep this tab open while it runs.
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <button
-                  data-cy="run-all-confirm-cancel"
                   onClick={() => setShowRunAllConfirm(false)}
                   style={{
                     background: "var(--surface2)", border: "1px solid var(--border)",
@@ -750,7 +773,6 @@ export default function ScrapePanel({
                   Cancel
                 </button>
                 <button
-                  data-cy="run-all-confirm-continue"
                   onClick={() => { setShowRunAllConfirm(false); handleRunAllTerms(); }}
                   style={{
                     background: "rgba(167,139,250,0.2)", border: "1px solid rgba(167,139,250,0.4)",
@@ -853,7 +875,7 @@ export default function ScrapePanel({
 
           {/* ── Error ── */}
           {error && (
-            <div data-cy="scrape-error" style={{
+            <div style={{
               background: "rgba(224,82,82,0.1)", border: "1px solid rgba(224,82,82,0.3)",
               borderRadius: 7, padding: "10px 14px", fontSize: 13, color: "var(--red)", marginTop: 8,
             }}>
@@ -863,7 +885,7 @@ export default function ScrapePanel({
 
           {/* ── Single scrape result ── */}
           {result && !runSummary && (
-            <div data-cy="scrape-result" style={{
+            <div style={{
               background: "rgba(62,207,142,0.08)", border: "1px solid rgba(62,207,142,0.2)",
               borderRadius: 7, padding: "10px 14px", fontSize: 13, marginTop: 8,
               display: "flex", gap: 20, flexWrap: "wrap",
@@ -911,6 +933,10 @@ export default function ScrapePanel({
             newLeads={newLeadsPreview}
             onViewInTable={onViewInTable ? handleViewInTableClick : null}
           />
+
+          {demoNotice && (
+            <DemoNoticeCard feature={demoNotice} onClose={() => setDemoNotice(null)} />
+          )}
 
         </div>
       )}

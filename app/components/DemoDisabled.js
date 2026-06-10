@@ -1,47 +1,98 @@
 "use client";
-import { useState } from "react";
 
-// The portfolio is public/demo by default. Set NEXT_PUBLIC_DEMO_MODE=false
-// only when intentionally testing write/API flows locally.
-export const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE !== "false";
+import { useEffect } from "react";
 
-/**
- * Wraps any button in a non-interactive shell with a styled
- * "Demo mode - disabled" tooltip on hover.
- * When DEMO_MODE is false this component is a transparent pass-through.
- */
-export function DemoDisabled({ children }) {
-  const [hovered, setHovered] = useState(false);
-  if (!DEMO_MODE) return children;
+// Portfolio deployment is always a public demo.
+export const DEMO_MODE = true;
+
+const FEATURE_COPY = {
+  scrape: {
+    title: "Scraping disabled on this demo site",
+    body: "Google Places scraping is turned off in the portfolio version. Sample leads are pre-loaded so you can explore filters, maps, scoring, and coverage without live API calls.",
+  },
+  enrich: {
+    title: "Enrichment disabled on this demo site",
+    body: "AI enrichment and business registry lookup are turned off in the portfolio version. Names, emails, and contact details in the table are fictional sample data.",
+  },
+  research: {
+    title: "Research disabled on this demo site",
+    body: "AI cold-call research is turned off in the portfolio version. Use the sample data to explore the dashboard layout and lead workflow.",
+  },
+};
+
+export function DemoNoticeCard({ feature = "scrape", onClose }) {
+  const copy = FEATURE_COPY[feature] || FEATURE_COPY.scrape;
+
+  useEffect(() => {
+    function onKey(e) {
+      if (e.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
   return (
     <div
-      style={{ position: "relative", display: "inline-flex", cursor: "not-allowed" }}
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 10000,
+        background: "rgba(0,0,0,0.48)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        padding: 24,
+      }}
     >
-      <div style={{ pointerEvents: "none", opacity: 0.4 }}>{children}</div>
-      {hovered && (
-        <div
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="demo-notice-title"
+        data-cy="demo-notice"
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--border)",
+          borderRadius: 12,
+          padding: "24px 28px",
+          maxWidth: 440,
+          width: "100%",
+          boxShadow: "0 16px 48px rgba(0,0,0,0.35)",
+        }}
+      >
+        <div style={{
+          fontSize: 11,
+          color: "var(--green)",
+          fontFamily: "var(--font-mono)",
+          letterSpacing: "0.06em",
+          marginBottom: 8,
+        }}>
+          PORTFOLIO DEMO
+        </div>
+        <h3 id="demo-notice-title" style={{ fontSize: 17, fontWeight: 600, marginBottom: 10, color: "var(--text)" }}>
+          {copy.title}
+        </h3>
+        <p style={{ fontSize: 14, color: "var(--muted)", lineHeight: 1.55, marginBottom: 20 }}>
+          {copy.body}
+        </p>
+        <button
+          type="button"
+          onClick={onClose}
           style={{
-            position: "absolute",
-            bottom: "calc(100% + 6px)",
-            left: "50%",
-            transform: "translateX(-50%)",
-            background: "var(--surface)",
-            border: "1px solid var(--border2)",
-            borderRadius: 6,
-            padding: "5px 10px",
-            fontSize: 11,
-            color: "var(--muted)",
-            whiteSpace: "nowrap",
-            zIndex: 9999,
-            boxShadow: "0 4px 12px rgba(0,0,0,0.3)",
-            pointerEvents: "none",
+            background: "var(--surface2)",
+            border: "1px solid var(--border)",
+            color: "var(--text)",
+            borderRadius: 8,
+            padding: "8px 18px",
+            fontSize: 13,
+            cursor: "pointer",
+            fontWeight: 500,
           }}
         >
-          Demo mode - disabled
-        </div>
-      )}
+          Got it
+        </button>
+      </div>
     </div>
   );
 }

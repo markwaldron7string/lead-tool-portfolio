@@ -1,0 +1,305 @@
+{
+  "Eastern Suburbs Sydney": [
+    "118"
+  ],
+  "Inner West Sydney": [
+    "120"
+  ],
+  "Canterbury-Bankstown": [
+    "119"
+  ],
+  "St George Sydney": [
+    "119"
+  ],
+  "Sydney CBD": [
+    "117"
+  ],
+  "Lower North Shore Sydney": [
+    "121"
+  ],
+  "Upper North Shore Sydney": [
+    "121"
+  ],
+  "Northern Beaches Sydney": [
+    "122"
+  ],
+  "Parramatta": [
+    "125"
+  ],
+  "Hills District Sydney": [
+    "115"
+  ],
+  "Western Sydney Blacktown Penrith": [
+    "116"
+  ],
+  "Liverpool Fairfield": [
+    "127"
+  ],
+  "Blue Mountains Outer West": [
+    "124"
+  ],
+  "Sutherland Shire": [
+    "128"
+  ],
+  "South West Campbelltown Camden": [
+    "123"
+  ],
+  "Central Coast North Wyong": [
+    "102"
+  ],
+  "Central Coast South Gosford": [
+    "102"
+  ],
+  "Newcastle City": [
+    "111"
+  ],
+  "Lake Macquarie": [
+    "111"
+  ],
+  "Maitland Hunter Valley": [
+    "106"
+  ],
+  "Port Stephens": [
+    "111"
+  ],
+  "Wollongong": [
+    "107"
+  ],
+  "Shellharbour Kiama": [
+    "107"
+  ],
+  "Shoalhaven Nowra": [
+    "114"
+  ],
+  "Batemans Bay Eurobodalla": [
+    "101"
+  ],
+  "Belconnen Canberra": [
+    "801"
+  ],
+  "Gungahlin Canberra": [
+    "801"
+  ],
+  "Tuggeranong Canberra": [
+    "801"
+  ],
+  "North Canberra Inner North": [
+    "801"
+  ],
+  "South Canberra Woden Weston Creek": [
+    "801"
+  ],
+  "Queanbeyan": [
+    "101"
+  ],
+  "Goulburn": [
+    "101"
+  ],
+  "Port Macquarie": [
+    "108"
+  ],
+  "Coffs Harbour": [
+    "104"
+  ],
+  "Taree Mid Coast": [
+    "108"
+  ],
+  "Byron Bay Ballina": [
+    "112"
+  ],
+  "Lismore Richmond Valley": [
+    "112"
+  ],
+  "Tweed Heads": [
+    "309"
+  ],
+  "Tamworth": [
+    "110"
+  ],
+  "Armidale": [
+    "110"
+  ],
+  "Wagga Wagga": [
+    "113"
+  ],
+  "Albury": [
+    "109"
+  ],
+  "Bathurst Orange": [
+    "103"
+  ],
+  "Dubbo": [
+    "105"
+  ],
+  "Melbourne Inner CBD Fitzroy Carlton": [
+    "206"
+  ],
+  "Melbourne Inner East Boroondara Hawthorn": [
+    "207"
+  ],
+  "Melbourne Inner South Bayside St Kilda": [
+    "208"
+  ],
+  "Melbourne North East Doncaster Manningham": [
+    "209"
+  ],
+  "Melbourne North West Moonee Valley Moreland": [
+    "210"
+  ],
+  "Melbourne South East Knox Dandenong Casey": [
+    "212"
+  ],
+  "Melbourne West Wyndham Maribyrnong Melton": [
+    "213"
+  ],
+  "Melbourne Outer East Yarra Ranges Maroondah": [
+    "211"
+  ],
+  "Mornington Peninsula": [
+    "214"
+  ],
+  "Geelong Surf Coast": [
+    "203"
+  ],
+  "Ballarat": [
+    "201"
+  ],
+  "Bendigo": [
+    "202"
+  ],
+  "Latrobe Valley Gippsland": [
+    "205"
+  ],
+  "Shepparton": [
+    "216"
+  ],
+  "Wodonga": [
+    "204"
+  ],
+  "Warrnambool South West Coast": [
+    "217"
+  ],
+  "Daylesford Macedon Ranges": [
+    "201"
+  ],
+  "Brisbane Inner City CBD South Brisbane": [
+    "305"
+  ],
+  "Brisbane North Chermside Nundah": [
+    "302"
+  ],
+  "Brisbane South Holland Park Mt Gravatt": [
+    "303"
+  ],
+  "Brisbane East Wynnum Manly Carindale": [
+    "301"
+  ],
+  "Brisbane West Toowong Indooroopilly": [
+    "304"
+  ],
+  "Moreton Bay North Caboolture Bribie Island": [
+    "313"
+  ],
+  "Moreton Bay South Strathpine Lawnton": [
+    "314"
+  ],
+  "Logan Beaudesert": [
+    "311"
+  ],
+  "Ipswich": [
+    "310"
+  ],
+  "Redlands": [
+    "301"
+  ],
+  "Gold Coast North Coomera Hope Island": [
+    "309"
+  ],
+  "Gold Coast Central Surfers Paradise Broadbeach": [
+    "309"
+  ],
+  "Gold Coast South Palm Beach Coolangatta": [
+    "309"
+  ],
+  "Sunshine Coast North Noosa": [
+    "316"
+  ],
+  "Sunshine Coast Central Maroochydore Mooloolaba": [
+    "316"
+  ],
+  "Toowoomba": [
+    "317"
+  ],
+  "Cairns": [
+    "306"
+  ],
+  "Townsville": [
+    "318"
+  ],
+  "Mackay": [
+    "312"
+  ],
+  "Rockhampton": [
+    "308"
+  ],
+  "Hervey Bay Bundaberg": [
+    "319"
+  ],
+  "Perth Inner CBD Subiaco Fremantle": [
+    "503"
+  ],
+  "Perth North West Joondalup Wanneroo": [
+    "505"
+  ],
+  "Perth North East Swan Midland Kalamunda": [
+    "504"
+  ],
+  "Perth South West Cockburn Kwinana Rockingham": [
+    "507"
+  ],
+  "Perth South East Canning Gosnells Armadale": [
+    "506"
+  ],
+  "Mandurah Peel Region": [
+    "502"
+  ],
+  "Bunbury South West WA": [
+    "501"
+  ],
+  "Adelaide Central Hills CBD Inner East Burnside": [
+    "401"
+  ],
+  "Adelaide North Prospect Tea Tree Gully Elizabeth": [
+    "402"
+  ],
+  "Adelaide West Port Adelaide Hindmarsh West Lakes": [
+    "404"
+  ],
+  "Adelaide South Marion Morphett Vale Onkaparinga": [
+    "403"
+  ],
+  "Barossa Valley Clare Valley": [
+    "405"
+  ],
+  "Fleurieu Peninsula Victor Harbor": [
+    "407"
+  ],
+  "Hobart Inner CBD Sandy Bay Battery Point": [
+    "601"
+  ],
+  "Hobart North East Clarence Glenorchy Kingston": [
+    "601"
+  ],
+  "Launceston": [
+    "602"
+  ],
+  "Devonport North West Coast": [
+    "604"
+  ],
+  "Darwin Palmerston": [
+    "701"
+  ],
+  "Alice Springs": [
+    "702"
+  ]
+}

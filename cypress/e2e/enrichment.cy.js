@@ -1,25 +1,19 @@
-describe('enrichment in demo mode', () => {
+describe('mocked enrichment flow', () => {
   beforeEach(() => {
     cy.blockUnmockedPaidApis();
     cy.mockLeadCsv('/leads_au.csv', 'leads-au-single.csv');
+    cy.mockEnrichResponse('enrich-au.json');
+    cy.mockBusinessIdResponse('/api/abn', 'abn-au.json');
   });
 
-  it('shows the enrichment bar but enrichment is disabled in demo mode', () => {
+  it('shows a demo notice instead of enriching on the portfolio site', () => {
     cy.visit('/au');
 
-    // Enrichment bar is visible and shows the default description
-    cy.get('[data-cy="enrichment-bar"]').should('be.visible');
-    cy.get('[data-cy="enrichment-summary"]')
-      .should('be.visible')
-      .and('contain', 'Extracts contact info');
-
-    // In demo mode the "Enrich all leads" button is wrapped in DemoDisabled
-    // - it renders without data-cy and is not clickable
-    cy.get('[data-cy="enrich-all-button"]').should('not.exist');
-
-    // Per-lead enrich and research buttons are also replaced by DemoDisabled
     cy.get('[data-cy="lead-row"]').should('contain', 'Fixture Buyers Agency AU');
-    cy.get('[data-cy="lead-enrich-button"]').should('not.exist');
-    cy.get('[data-cy="lead-research-button"]').should('not.exist');
+    cy.get('[data-cy="enrich-all-button"]').click();
+
+    cy.get('[data-cy="demo-notice"]').should('be.visible');
+    cy.get('[data-cy="demo-notice"]').should('contain', 'Enrichment disabled on this demo site');
+    cy.get('[data-cy="lead-row"]').should('not.contain', 'Taylor Cypress');
   });
 });

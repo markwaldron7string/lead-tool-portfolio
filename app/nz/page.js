@@ -1,20 +1,17 @@
 import LeadsPage from "@/app/leads-page";
+import { NZ_AREA_NAMES } from "@/lib/nz-areas";
 
-const NZ_CITIES = [
-  "Auckland", "Wellington", "Christchurch", "Hamilton", "Tauranga",
-  "Dunedin", "Palmerston North", "Nelson", "Rotorua", "New Plymouth",
-];
-
-export default function NZPage() {
+export default async function NZPage({ searchParams }) {
+  const params = await searchParams;
   return (
     <LeadsPage
-      title="Buyers Agents - New Zealand 🇳🇿"
       csvFile="/leads_nz.csv"
-      cities={NZ_CITIES}
+      cities={NZ_AREA_NAMES}
       regionLabel="Region"
       businessIdLabel="NZBN"
       country="NZ"
       countryName="New Zealand"
+      initialFilterArea={params?.area || ""}
     />
   );
 }

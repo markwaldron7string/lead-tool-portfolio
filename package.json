@@ -6,19 +6,25 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run",
-    "e2e": "cypress run",
+    "cypress:run": "ELECTRON_RUN_AS_NODE= cypress run",
+    "e2e": "ELECTRON_RUN_AS_NODE= cypress run",
+    "e2e:ci": "start-server-and-test start http://127.0.0.1:3000/login cypress:run",
     "dev": "next dev --webpack",
     "build": "next build --webpack",
-    "start": "next start",
-    "lint": "eslint"
+    "start": "next start --hostname 127.0.0.1 --port 3000",
+    "lint": "eslint",
+    "fetch:nz-boundaries": "node scripts/fetch-nz-boundaries.js",
+    "anonymize:data": "node scripts/anonymize_portfolio_data.js"
   },
   "dependencies": {
+    "@upstash/redis": "^1.38.0",
+    "leaflet": "^1.9.4",
     "next": "16.2.6",
     "openai": "^6.37.0",
     "papaparse": "^5.5.3",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "react-leaflet": "^5.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.29.7",
@@ -34,6 +40,7 @@
     "eslint-config-next": "16.2.6",
     "jest": "^30.4.2",
     "jest-environment-jsdom": "^30.4.1",
+    "start-server-and-test": "^2.1.5",
     "tailwindcss": "^4"
   }
 }

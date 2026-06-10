@@ -194,7 +194,7 @@ async function getPageData(baseUrl) {
 
 // ── GPT extraction ────────────────────────────────────────────────────────────
 
-async function extractWithGPT(client, pageText, socialContext, businessName, existingEmail) {
+async function extractWithGPT(pageText, socialContext, businessName, existingEmail) {
   const prompt = `You are extracting contact information from an Australian buyers agent business website.
 
 Business name: ${businessName}
@@ -239,11 +239,7 @@ Important: for founder_name, never return a page heading, service name, menu ite
 
 export async function POST(request) {
   try {
-    if (!process.env.OPENAI_API_KEY) {
-      return Response.json({ error: 'Not available in demo mode' }, { status: 503 });
-    }
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
     const { website, businessName, existingEmail } = await request.json();
 
     if (!website) return Response.json({ error: 'No website provided' }, { status: 400 });
@@ -283,7 +279,7 @@ export async function POST(request) {
       .join('\n');
 
     // GPT fills in contact info + confirms/supplements social URLs
-    const result = await extractWithGPT(client, page.text, socialContext || regexSocial.all, businessName, existingEmail);
+    const result = await extractWithGPT(page.text, socialContext || regexSocial.all, businessName, existingEmail);
 
     // Merge: regex/JSON-LD social takes priority over GPT guesses for URLs
     // (GPT is better at names/emails, regex is better at URLs)

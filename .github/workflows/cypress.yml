@@ -15,14 +15,5 @@ jobs:
         with:
           node-version: 22
       - run: npm ci
-      - name: Cypress run
-        uses: cypress-io/github-action@v6
-        with:
-          build: npm run build
-          start: npm run start
-          wait-on: 'http://localhost:3000'
-          wait-on-timeout: 120
-        env:
-          NEXT_PUBLIC_DEMO_MODE: 'true'
-          CYPRESS_SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
-          SITE_PASSWORD: ${{ secrets.SITE_PASSWORD }}
+      - run: npm run build
+      - run: npm run e2e:ci

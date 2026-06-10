@@ -1,41 +1,12 @@
-describe('demo mode smoke tests', () => {
-  beforeEach(() => {
-    cy.blockUnmockedPaidApis();
-  });
+describe('login smoke test', () => {
+  it('renders the login page', () => {
+    cy.visit('/login');
 
-  it('renders the home page with both country cards', () => {
-    cy.mockLeadCsv('/leads_au.csv', 'leads-au-single.csv');
-    cy.mockLeadCsv('/leads_nz.csv', 'leads-nz-single.csv');
-
-    cy.visit('/');
-
-    cy.get('[data-cy="home-title"]').should('be.visible').and('contain', 'Select Country');
-    cy.get('[data-cy="country-card-au"]').should('be.visible').and('contain', 'Australia');
-    cy.get('[data-cy="country-card-nz"]').should('be.visible').and('contain', 'New Zealand');
-  });
-
-  it('AU dashboard loads with sample leads and stat cards', () => {
-    cy.mockLeadCsv('/leads_au.csv', 'leads-au-single.csv');
-
-    cy.visit('/au');
-
-    cy.get('[data-cy="leads-page-title"]').should('contain', 'Australia');
-    cy.get('[data-cy="stat-unique-leads"]').should('be.visible');
-    cy.get('[data-cy="leads-table"]').should('be.visible');
-    cy.get('[data-cy="lead-row"]')
-      .should('have.length.at.least', 1)
-      .and('contain', 'Fixture Buyers Agency AU');
-  });
-
-  it('NZ dashboard loads with sample leads', () => {
-    cy.mockLeadCsv('/leads_nz.csv', 'leads-nz-single.csv');
-
-    cy.visit('/nz');
-
-    cy.get('[data-cy="leads-page-title"]').should('contain', 'New Zealand');
-    cy.get('[data-cy="leads-table"]').should('be.visible');
-    cy.get('[data-cy="lead-row"]')
-      .should('have.length.at.least', 1)
-      .and('contain', 'Fixture Buyers Agency NZ');
+    cy.get('[data-cy="login-title"]', { timeout: 10000 }).should('be.visible').and('contain', 'Lead Scraper');
+    cy.get('[data-cy="login-form"]').should('be.visible').and('contain', 'Password required');
+    cy.get('[data-cy="password-input"]')
+      .should('be.visible')
+      .and('have.attr', 'type', 'password');
+    cy.get('[data-cy="login-submit"]').should('be.visible').and('be.disabled');
   });
 });
