@@ -7,27 +7,7 @@ import { processFiles } from "@/lib/processor";
 import { NZ_AREA_GROUPS } from "@/lib/nz-areas";
 import { parseNzMapUrl } from "@/lib/nz-map-nav";
 import { getMapConfig, MAP_OCEAN_BG } from "@/lib/map-config";
-import { CountrySelect } from "@/app/components/CountrySelect";
-
-function SunIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="5"/>
-      <line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-      <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-    </svg>
-  );
-}
-
-function MoonIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
-    </svg>
-  );
-}
+import { MapPageHeader, getMapHeaderTokens } from "@/app/components/MapPageHeader";
 
 function MapSpinner({ theme }) {
   const dark = theme !== "light";
@@ -49,14 +29,8 @@ function MapSpinner({ theme }) {
 
 const CoverageMap = dynamic(
   () => import("@/app/components/CoverageMap"),
-  { ssr: false, loading: () => <MapSpinner /> }
+  { ssr: false, loading: () => <MapSpinner theme="dark" /> }
 );
-
-const LEGEND_ITEMS = [
-  { key: "available", label: "Available", color: "#22c55e", glow: "rgba(34,197,94,0.5)" },
-  { key: "taken",     label: "Taken",     color: "#64748b", glow: null },
-  { key: "noLeads",   label: "No leads",  color: null },
-];
 
 const mapConfig = getMapConfig("NZ");
 
@@ -69,9 +43,10 @@ export default function NewZealandMapPage() {
   const [jumpArea, setJumpArea]           = useState("");
   const [jumpState, setJumpState]         = useState("");
   const [jumpToken, setJumpToken]         = useState(0);
-  const [stats, setStats]                 = useState({ available: 0, taken: 0, noLeads: 0 });
+  const [stats, setStats]                 = useState({ available: 0, taken: 0 });
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedArea, setSelectedArea]   = useState("");
+  const [statusListFilter, setStatusListFilter] = useState(null);
   const [theme, setTheme]                 = useState("dark");
   const mapRef                            = useRef(null);
 
@@ -105,7 +80,7 @@ export default function NewZealandMapPage() {
   };
 
   const onMapReady    = useCallback((map) => { mapRef.current = map; }, []);
-  const onStatsChange = useCallback((s) => setStats(s), []);
+  const onStatsChange = useCallback((s) => setStats({ available: s.available, taken: s.taken }), []);
 
   useEffect(() => {
     fetch("/leads_nz.csv")
@@ -152,107 +127,39 @@ export default function NewZealandMapPage() {
     setSelectedArea("");
   };
 
+  const handleLegendClick = (key) => {
+    setStatusListFilter((prev) => (prev === key ? null : key));
+  };
+
   const citiesInGroup = selectedGroup
     ? (NZ_AREA_GROUPS.find((g) => g.label === selectedGroup)?.areas || [])
     : [];
 
-  const dark = theme !== "light";
-  const H = {
-    bg:      dark ? "rgba(14,14,16,0.98)"    : "rgba(248,249,252,0.98)",
-    border:  dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)",
-    text:    dark ? "#efefef"                : "#17171c",
-    muted:   dark ? "#9ca3af"               : "#6b7280",
-    divider: dark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.10)",
-    selBg:   dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-    selBdr:  dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
-    selClr:  dark ? "#d1d5db"               : "#374151",
-    btnBg:   dark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.04)",
-    btnBdr:  dark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.12)",
-    pageBg:  dark ? MAP_OCEAN_BG.dark       : MAP_OCEAN_BG.light,
-    legendNo:dark ? "#1e293b"               : "#94a3b8",
-  };
-
-  const selectStyle = {
-    background: H.selBg, border: `1px solid ${H.selBdr}`,
-    color: H.selClr, borderRadius: 6, padding: "5px 10px",
-    fontSize: 12, cursor: "pointer", outline: "none",
-  };
-
-  const btnStyle = {
-    background: H.btnBg, border: `1px solid ${H.btnBdr}`,
-    color: H.muted, borderRadius: 6, padding: "5px 10px",
-    fontSize: 12, cursor: "pointer", flexShrink: 0,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    lineHeight: 1,
-  };
+  const H = getMapHeaderTokens(theme !== "light");
 
   return (
     <div style={{ height: "100vh", display: "flex", flexDirection: "column", background: H.pageBg, overflow: "hidden" }}>
-      <header style={{
-        height: 56, flexShrink: 0,
-        display: "flex", alignItems: "center", gap: 10, padding: "0 16px",
-        borderBottom: `1px solid ${H.border}`,
-        background: H.bg, backdropFilter: "blur(8px)", zIndex: 10,
-      }}>
-        <a href="/nz" style={{ ...btnStyle, textDecoration: "none", width: 30, height: 30, padding: 0 }}
-          title="Back to leads table">←</a>
+      <MapPageHeader
+        country="NZ"
+        backHref="/nz"
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        selectedGroup={selectedGroup}
+        onGroupChange={handleGroupChange}
+        groupOptions={NZ_AREA_GROUPS.map((g) => ({ label: g.label, value: g.label }))}
+        groupPlaceholder={`${mapConfig.groupLabel}...`}
+        selectedArea={selectedArea}
+        onAreaChange={handleAreaChange}
+        areaOptions={citiesInGroup.map((area) => ({ label: area, value: area }))}
+        areaPlaceholder={`Select ${mapConfig.areaLabel}...`}
+        areaDisabled={!selectedGroup}
+        onReset={handleReset}
+        stats={stats}
+        statusListFilter={statusListFilter}
+        onLegendClick={handleLegendClick}
+      />
 
-        <div style={{ fontWeight: 600, fontSize: 14, color: H.text, flexShrink: 0, display: "flex", alignItems: "center", gap: 6 }}>
-          <CountrySelect country="NZ" fontSize={14} target="map" />
-          Coverage Map
-        </div>
-
-        <div style={{ width: 1, height: 20, background: H.divider, flexShrink: 0 }} />
-
-        <select value={selectedGroup} onChange={handleGroupChange} style={{ ...selectStyle, maxWidth: 180 }}>
-          <option value="">{mapConfig.groupLabel}...</option>
-          {NZ_AREA_GROUPS.map((g) => (
-            <option key={g.label} value={g.label}>{g.label}</option>
-          ))}
-        </select>
-
-        <select
-          value={selectedArea}
-          onChange={handleAreaChange}
-          disabled={!selectedGroup}
-          style={{ ...selectStyle, maxWidth: 230, opacity: selectedGroup ? 1 : 0.4, cursor: selectedGroup ? "pointer" : "not-allowed" }}
-        >
-          <option value="">Select {mapConfig.areaLabel}...</option>
-          {citiesInGroup.map((area) => (
-            <option key={area} value={area}>{area}</option>
-          ))}
-        </select>
-
-        <button onClick={handleReset} style={btnStyle}>Reset view</button>
-
-        <div style={{ flex: 1 }} />
-
-        <div style={{ display: "flex", gap: 14, alignItems: "center", flexShrink: 0 }}>
-          {LEGEND_ITEMS.map(({ key, label, color, glow }) => (
-            <div key={key} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 12 }}>
-              <span style={{
-                width: 8, height: 8, borderRadius: "50%",
-                background: color || H.legendNo,
-                display: "inline-block", flexShrink: 0,
-                boxShadow: glow ? `0 0 5px ${glow}` : "none",
-                border: color ? "none" : `1px solid ${H.selBdr}`,
-              }} />
-              <span style={{ color: H.muted }}>{label}</span>
-              <span style={{ fontFamily: "monospace", fontWeight: 600, color: H.text, fontSize: 11 }}>
-                {stats[key]}
-              </span>
-            </div>
-          ))}
-        </div>
-
-        <div style={{ width: 1, height: 20, background: H.divider, flexShrink: 0 }} />
-
-        <button onClick={toggleTheme} title={dark ? "Switch to light mode" : "Switch to dark mode"} style={btnStyle}>
-          {dark ? <SunIcon /> : <MoonIcon />}
-        </button>
-      </header>
-
-      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column" }}>
+      <div style={{ flex: 1, overflow: "hidden", display: "flex", flexDirection: "column", minHeight: 0 }}>
         <CoverageMap
           country="NZ"
           leads={leads}
@@ -268,6 +175,8 @@ export default function NewZealandMapPage() {
           onMapReady={onMapReady}
           mapHeight="100%"
           theme={theme}
+          statusListFilter={statusListFilter}
+          onStatusListClose={() => setStatusListFilter(null)}
         />
       </div>
     </div>

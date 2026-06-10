@@ -452,6 +452,80 @@ function HoverTooltip({ info, pos, TK }) {
   );
 }
 
+function findLeadAreaName(lead, areaMapping) {
+  if (!areaMapping) return null;
+  for (const areaName of Object.keys(areaMapping)) {
+    if (areaMatchesLead(areaName, lead)) return areaName;
+  }
+  return null;
+}
+
+function isLeadMarkedTaken(lead, takenLeads, takenAreas, areaMapping, areaLeadMap) {
+  if (takenLeads.includes(lead.title)) return true;
+  const area = findLeadAreaName(lead, areaMapping);
+  if (!area) return false;
+  if (takenAreas.includes(area)) return true;
+  const { titles = [], totalCount = 0 } = areaLeadMap[area] || {};
+  return totalCount > 0 && titles.every((t) => takenLeads.includes(t));
+}
+
+function LeadListRow({ lead, takenLeads, onMarkLead, onLeadClick, TK, areaName, dimmed = false }) {
+  const isLeadTaken = takenLeads.includes(lead.title);
+  const score = Number(lead._score) || 0;
+  const scoreColor = score >= 75 ? "#22c55e" : score >= 40 ? "#e8a045" : TK.muted;
+  const cat = lead._category || "Uncategorised";
+  const catStyle = CAT_COLORS[cat] || CAT_COLORS["Uncategorised"];
+
+  return (
+    <div style={{
+      padding: "10px 14px", borderBottom: `1px solid ${TK.rowBorder}`,
+      opacity: dimmed ? 0.45 : 1, transition: "opacity 0.2s",
+    }}>
+      <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
+        <LeadToggle title={lead.title} takenLeads={takenLeads} onMarkLead={onMarkLead} TK={TK} />
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 4 }}>
+            <button
+              type="button"
+              onClick={() => onLeadClick?.(lead)}
+              style={{
+                background: "none", border: "none", padding: 0, textAlign: "left",
+                fontWeight: 600, fontSize: 12, lineHeight: 1.3, cursor: "pointer",
+                textDecorationLine: isLeadTaken ? "line-through" : "underline",
+                textDecorationStyle: "solid",
+                textDecorationColor: "transparent",
+                color: isLeadTaken ? TK.muted : TK.text,
+                transition: "text-decoration-color 0.15s",
+              }}
+              onMouseOver={(e) => { if (!isLeadTaken) e.currentTarget.style.textDecorationColor = TK.muted; }}
+              onMouseOut={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
+            >
+              {lead.title}
+            </button>
+            <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: scoreColor, flexShrink: 0 }}>
+              {score}
+            </span>
+          </div>
+          {areaName && (
+            <div style={{ fontSize: 10, color: TK.muted, marginTop: 2, opacity: 0.85 }}>{areaName}</div>
+          )}
+          <div style={{ fontSize: 11, color: TK.muted, marginTop: 2 }}>
+            {lead.phone || <span style={{ opacity: 0.5 }}>No phone</span>}
+          </div>
+          <div style={{ fontSize: 11, marginTop: 2, marginBottom: 4 }}>
+            {lead.emails
+              ? <span style={{ color: "var(--email-color)" }}>{String(lead.emails).split(",")[0].trim()}</span>
+              : <span style={{ color: TK.muted, opacity: 0.5 }}>-</span>}
+          </div>
+          <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 99, ...catStyle }}>
+            {cat}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function LeadToggle({ title, takenLeads, onMarkLead, TK }) {
   const isTaken = takenLeads.includes(title);
   return (
@@ -547,58 +621,17 @@ function SlidePanel({ info, closing, leads, takenLeads, onClose, onMark, onMarkL
             </span>
           </div>
         ) : (
-          areaLeads.map((lead, i) => {
-            const isLeadTaken = takenLeads.includes(lead.title);
-            const score = Number(lead._score) || 0;
-            const scoreColor = score >= 75 ? "#22c55e" : score >= 40 ? "#e8a045" : TK.muted;
-            const cat = lead._category || "Uncategorised";
-            const catStyle = CAT_COLORS[cat] || CAT_COLORS["Uncategorised"];
-            return (
-              <div key={i} style={{
-                padding: "10px 14px", borderBottom: `1px solid ${TK.rowBorder}`,
-                opacity: isLeadTaken ? 0.45 : 1, transition: "opacity 0.2s",
-              }}>
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 8, marginBottom: 4 }}>
-                  <LeadToggle title={lead.title} takenLeads={takenLeads} onMarkLead={onMarkLead} TK={TK} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 4 }}>
-                      <button
-                        type="button"
-                        onClick={() => onLeadClick?.(lead)}
-                        style={{
-                          background: "none", border: "none", padding: 0, textAlign: "left",
-                          fontWeight: 600, fontSize: 12, lineHeight: 1.3, cursor: "pointer",
-                          textDecorationLine: isLeadTaken ? "line-through" : "underline",
-                          textDecorationStyle: "solid",
-                          textDecorationColor: "transparent",
-                          color: isLeadTaken ? TK.muted : TK.text,
-                          transition: "text-decoration-color 0.15s",
-                        }}
-                        onMouseOver={(e) => { if (!isLeadTaken) e.currentTarget.style.textDecorationColor = TK.muted; }}
-                        onMouseOut={(e) => { e.currentTarget.style.textDecorationColor = "transparent"; }}
-                      >
-                        {lead.title}
-                      </button>
-                      <span style={{ fontFamily: "monospace", fontSize: 11, fontWeight: 700, color: scoreColor, flexShrink: 0 }}>
-                        {score}
-                      </span>
-                    </div>
-                    <div style={{ fontSize: 11, color: TK.muted, marginTop: 2 }}>
-                      {lead.phone || <span style={{ opacity: 0.5 }}>No phone</span>}
-                    </div>
-                    <div style={{ fontSize: 11, marginTop: 2, marginBottom: 4 }}>
-                      {lead.emails
-                        ? <span style={{ color: "var(--email-color)" }}>{String(lead.emails).split(",")[0].trim()}</span>
-                        : <span style={{ color: TK.muted, opacity: 0.5 }}>-</span>}
-                    </div>
-                    <span style={{ display: "inline-block", fontSize: 10, fontWeight: 600, padding: "1px 6px", borderRadius: 99, ...catStyle }}>
-                      {cat}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            );
-          })
+          areaLeads.map((lead, i) => (
+            <LeadListRow
+              key={i}
+              lead={lead}
+              takenLeads={takenLeads}
+              onMarkLead={onMarkLead}
+              onLeadClick={onLeadClick}
+              TK={TK}
+              dimmed={takenLeads.includes(lead.title)}
+            />
+          ))
         )}
       </div>
 
@@ -617,6 +650,111 @@ function SlidePanel({ info, closing, leads, takenLeads, onClose, onMark, onMarkL
         )}
         <button onClick={() => onViewLeads(info.areaName)}
           style={{ background: "transparent", color: TK.text, fontWeight: 500, fontSize: 13, padding: "9px", borderRadius: 7, border: `1px solid ${TK.panelBorder}`, cursor: "pointer", width: "100%" }}>
+          View all in table →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function AggregateLeadsPanel({
+  filter,
+  closing,
+  leads,
+  takenLeads,
+  takenAreas,
+  areaMapping,
+  areaLeadMap,
+  onClose,
+  onMarkLead,
+  onLeadClick,
+  onViewTable,
+  TK,
+}) {
+  const filteredLeads = useMemo(() => {
+    const active = leads.filter((l) => l._category !== "EXCLUDED");
+    return active
+      .filter((lead) => {
+        const taken = isLeadMarkedTaken(lead, takenLeads, takenAreas, areaMapping, areaLeadMap);
+        return filter === "available" ? !taken : taken;
+      })
+      .sort((a, b) => (Number(b._score) || 0) - (Number(a._score) || 0));
+  }, [leads, filter, takenLeads, takenAreas, areaMapping, areaLeadMap]);
+
+  const title = filter === "available" ? "Available leads" : "Taken leads";
+  const statusColor = filter === "available" ? "#22c55e" : TK.COLORS.taken;
+
+  return (
+    <div style={{
+      position: "absolute", top: 0, right: 0, bottom: 0,
+      width: "min(320px, 100%)",
+      background: TK.panel,
+      borderLeft: `1px solid ${TK.panelBorder}`,
+      zIndex: 1000,
+      display: "flex", flexDirection: "column",
+      fontFamily: "system-ui, sans-serif",
+      animation: closing ? "slideOut 0.26s ease forwards" : "slideIn 0.25s ease",
+      overflow: "hidden",
+      cursor: "default",
+    }}>
+      <div style={{ padding: "14px 14px 10px", borderBottom: `1px solid ${TK.panelSub}`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TK.text, lineHeight: 1.3, flex: 1, paddingRight: 8 }}>
+            {title}
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            style={{ background: "none", border: "none", color: TK.muted, cursor: "pointer", fontSize: 18, padding: 0, lineHeight: 1, flexShrink: 0 }}
+          >
+            ✕
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            display: "inline-block", fontFamily: "monospace", fontSize: 10, fontWeight: 700,
+            color: statusColor, letterSpacing: "0.08em",
+            background: `${statusColor}1a`, borderRadius: 4, padding: "2px 7px",
+          }}>
+            {filter === "available" ? "AVAILABLE" : "TAKEN"}
+          </span>
+          <span style={{ fontSize: 12, color: TK.muted }}>
+            {filteredLeads.length} lead{filteredLeads.length !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {filteredLeads.length === 0 ? (
+          <div style={{ padding: "28px 16px", textAlign: "center", color: TK.muted, fontSize: 13, lineHeight: 1.7 }}>
+            No {filter === "available" ? "available" : "taken"} leads yet.
+          </div>
+        ) : (
+          filteredLeads.map((lead, i) => (
+            <LeadListRow
+              key={i}
+              lead={lead}
+              takenLeads={takenLeads}
+              onMarkLead={onMarkLead}
+              onLeadClick={onLeadClick}
+              TK={TK}
+              areaName={findLeadAreaName(lead, areaMapping)}
+              dimmed={isLeadMarkedTaken(lead, takenLeads, takenAreas, areaMapping, areaLeadMap)}
+            />
+          ))
+        )}
+      </div>
+
+      <div style={{ padding: "10px 14px", borderTop: `1px solid ${TK.panelSub}`, flexShrink: 0 }}>
+        <button
+          type="button"
+          onClick={onViewTable}
+          style={{
+            background: "transparent", color: TK.text, fontWeight: 500, fontSize: 13,
+            padding: "9px", borderRadius: 7, border: `1px solid ${TK.panelBorder}`,
+            cursor: "pointer", width: "100%",
+          }}
+        >
           View all in table →
         </button>
       </div>
@@ -659,6 +797,8 @@ export default function CoverageMap({
   onMapReady,
   mapHeight,
   theme = "dark",
+  statusListFilter = null,
+  onStatusListClose,
 }) {
   const mapConfig = useMemo(() => getMapConfig(country), [country]);
   const overview = useMemo(() => getOverviewSettings(mapConfig), [mapConfig]);
@@ -672,6 +812,7 @@ export default function CoverageMap({
   const [tooltipPos, setTooltipPos]     = useState(null);
   const [toast, setToast]               = useState(null);
   const [panelClosing, setPanelClosing]  = useState(false);
+  const [aggregateClosing, setAggregateClosing] = useState(false);
   const [modalLead, setModalLead]        = useState(null);
   const geoJsonRef                      = useRef(null);
   const layersByCodeRef                 = useRef(new Map());
@@ -706,6 +847,14 @@ export default function CoverageMap({
       setViewPhase(targetArea ? "zoomed" : "overview");
     }, 260);
   }, [targetArea]);
+  const closeAggregatePanel = useCallback(() => {
+    if (!statusListFilter) return;
+    setAggregateClosing(true);
+    setTimeout(() => {
+      setAggregateClosing(false);
+      onStatusListClose?.();
+    }, 260);
+  }, [statusListFilter, onStatusListClose]);
   const resetHover                      = useCallback(() => {
     setTooltipInfo(null);
     setTooltipPos(null);
@@ -810,6 +959,13 @@ export default function CoverageMap({
   useEffect(() => { sa4InfoMapRef.current = sa4InfoMap; }, [sa4InfoMap]);
   useEffect(() => { selectedAreaRef.current = selectedArea; }, [selectedArea]);
 
+  useEffect(() => {
+    if (!statusListFilter) return;
+    setPanelClosing(false);
+    setSelectedArea(null);
+    highlightAreaRef.current = null;
+  }, [statusListFilter]);
+
   // Keep open panel in sync when leads are marked complete/available
   useEffect(() => {
     if (!selectedArea?.areaName || !areaMapping) return;
@@ -840,8 +996,9 @@ export default function CoverageMap({
       ?? { areaName, status: "noLeads", count: 0, best: null };
     panelOpenedForRef.current = targetAreaRef.current;
     setPanelClosing(false);
+    onStatusListClose?.();
     setSelectedArea({ ...info });
-  }, [areaMapping, sa4InfoMap]);
+  }, [areaMapping, sa4InfoMap, onStatusListClose]);
 
   const onJumpComplete = useCallback(() => {
     if (autoOpenPanel && areaForPanel) openPanelForArea(areaForPanel);
@@ -1029,13 +1186,14 @@ export default function CoverageMap({
         const info = getInfo();
         if (!info) return;
         setPanelClosing(false);
+        onStatusListClose?.();
         highlightAreaRef.current = info.areaName;
         viewPhaseRef.current = "focused";
         setViewPhase("focused");
         setSelectedArea({ ...info });
       },
     });
-  }, [mapConfig.codeProp, mapConfig.nameProp]);
+  }, [mapConfig.codeProp, mapConfig.nameProp, onStatusListClose]);
 
   // ── Mark area ────────────────────────────────────────────────────────────
   const handleMark = useCallback(async (areaName, markTaken) => {
@@ -1166,14 +1324,18 @@ export default function CoverageMap({
         )}
       </MapContainer>
 
-      {selectedArea && (
+      {(selectedArea || statusListFilter) && (
         <div
-          onClick={panelClosing ? undefined : closePanel}
+          onClick={() => {
+            if (panelClosing || aggregateClosing) return;
+            if (selectedArea) closePanel();
+            else closeAggregatePanel();
+          }}
           style={{
             position: "absolute", top: 0, left: 0, right: PANEL_WIDTH, bottom: 0,
-            background: TK.dimmer, zIndex: 999, cursor: panelClosing ? "default" : "pointer",
-            opacity: panelClosing ? 0 : 1, transition: "opacity 0.3s ease",
-            pointerEvents: panelClosing ? "none" : "auto",
+            background: TK.dimmer, zIndex: 999, cursor: (panelClosing || aggregateClosing) ? "default" : "pointer",
+            opacity: (panelClosing || aggregateClosing) ? 0 : 1, transition: "opacity 0.3s ease",
+            pointerEvents: (panelClosing || aggregateClosing) ? "none" : "auto",
           }}
         />
       )}
@@ -1191,6 +1353,25 @@ export default function CoverageMap({
         onLeadClick={setModalLead}
         TK={TK}
       />
+      {statusListFilter && (
+        <AggregateLeadsPanel
+          filter={statusListFilter}
+          closing={aggregateClosing}
+          leads={leads}
+          takenLeads={takenLeads}
+          takenAreas={takenAreas}
+          areaMapping={areaMapping}
+          areaLeadMap={areaLeadMap}
+          onClose={closeAggregatePanel}
+          onMarkLead={handleMarkLead}
+          onLeadClick={setModalLead}
+          onViewTable={() => {
+            closeAggregatePanel();
+            window.location.href = `/${mapConfig.countryCode.toLowerCase()}`;
+          }}
+          TK={TK}
+        />
+      )}
       {modalLead && (
         <LeadModal
           lead={modalLead}

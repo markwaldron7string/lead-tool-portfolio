@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useCallback } from "react";
+import { useIsMobile } from "@/lib/use-media-query";
 
 function SunIcon() {
   return (
@@ -48,6 +49,7 @@ function useTheme() {
 export default function HomePage() {
   const [theme, toggleTheme] = useTheme();
   const [counts, setCounts] = useState({ au: null, nz: null });
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     async function loadCounts() {
@@ -86,7 +88,7 @@ export default function HomePage() {
         flexDirection: "column",
         alignItems: "center",
         justifyContent: "flex-start",
-        padding: "18vh 24px 40px",
+        padding: isMobile ? "72px 16px 32px" : "18vh 24px 40px",
         boxSizing: "border-box",
         position: "relative",
       }}
@@ -95,7 +97,7 @@ export default function HomePage() {
         onClick={toggleTheme}
         title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
         style={{
-          position: "absolute", top: 16, right: 16,
+          position: "absolute", top: isMobile ? 12 : 16, right: isMobile ? 12 : 16,
           background: "var(--surface2)", border: "1px solid var(--border)",
           color: "var(--text)", borderRadius: 8, padding: "7px 11px",
           fontSize: 15, cursor: "pointer", lineHeight: 1, transition: "border-color 0.15s",
@@ -103,11 +105,11 @@ export default function HomePage() {
       >
         {theme === "dark" ? <SunIcon /> : <MoonIcon />}
       </button>
-      <div style={{ textAlign: "center", marginBottom: 48 }}>
+      <div style={{ textAlign: "center", marginBottom: isMobile ? 32 : 48, width: "100%" }}>
         <div
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: 11,
+            fontSize: isMobile ? 10 : 11,
             color: "var(--green)",
             letterSpacing: "0.1em",
             marginBottom: 12,
@@ -118,7 +120,7 @@ export default function HomePage() {
         <h1
           data-cy="home-title"
           style={{
-            fontSize: 28,
+            fontSize: isMobile ? 24 : 28,
             fontWeight: 600,
             letterSpacing: "-0.02em",
             color: "var(--text)",
@@ -131,24 +133,27 @@ export default function HomePage() {
       <div
         style={{
           display: "flex",
-          gap: 20,
+          gap: isMobile ? 14 : 20,
           flexWrap: "wrap",
           justifyContent: "center",
+          width: "100%",
+          maxWidth: isMobile ? 360 : undefined,
         }}
       >
         {countries.map(({ flag, name, href, count }) => (
-          <Link key={href} href={href} style={{ textDecoration: "none" }}>
+          <Link key={href} href={href} style={{ textDecoration: "none", width: isMobile ? "100%" : undefined }}>
             <div
               data-cy={`country-card-${href.replace("/", "")}`}
               style={{
                 background: "var(--surface)",
                 border: "1px solid var(--border)",
                 borderRadius: 16,
-                padding: "40px 56px",
+                padding: isMobile ? "28px 24px" : "40px 56px",
                 textAlign: "center",
                 cursor: "pointer",
                 transition: "border-color 0.15s, background 0.15s",
-                minWidth: 220,
+                minWidth: isMobile ? undefined : 220,
+                width: isMobile ? "100%" : undefined,
               }}
               onMouseOver={(e) => {
                 e.currentTarget.style.borderColor = "var(--green)";
@@ -159,12 +164,12 @@ export default function HomePage() {
                 e.currentTarget.style.background = "var(--surface)";
               }}
             >
-              <div style={{ fontSize: 56, lineHeight: 1, marginBottom: 16 }}>
+              <div style={{ fontSize: isMobile ? 44 : 56, lineHeight: 1, marginBottom: 16 }}>
                 {flag}
               </div>
               <div
                 style={{
-                  fontSize: 18,
+                  fontSize: isMobile ? 17 : 18,
                   fontWeight: 600,
                   marginBottom: 10,
                   color: "var(--text)",
