@@ -6,7 +6,7 @@ import Papa from "papaparse";
 import { processFiles, leadsToCSV, scoreLead } from "@/lib/processor";
 import ScrapePanel from "@/app/components/ScrapePanel";
 import LeadModal from "@/app/components/LeadModal";
-import { DEMO_MODE, DemoNoticeCard } from "@/app/components/DemoDisabled";
+import { DEMO_MODE, DemoNoticeCard, DemoDataBanner } from "@/app/components/DemoDisabled";
 import { CountrySelect, COUNTRY_OPTIONS } from "@/app/components/CountrySelect";
 import { AU_AREA_GROUPS, AU_AREAS, getAreaGroupsForState, getAreasForState } from "@/lib/au-areas";
 import { NZ_AREAS, getAreaGroupsForRegion } from "@/lib/nz-areas";
@@ -1226,6 +1226,8 @@ export default function LeadsPage({
             />
           </div>
         )}
+
+        {DEMO_MODE && <DemoDataBanner countryName={countryName} />}
 
         {/* Stats */}
         {stats && (

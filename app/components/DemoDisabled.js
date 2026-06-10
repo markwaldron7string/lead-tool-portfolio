@@ -20,6 +20,40 @@ const FEATURE_COPY = {
   },
 };
 
+export function DemoDataBanner({ countryName }) {
+  return (
+    <div
+      data-cy="demo-data-banner"
+      style={{
+        background: "rgba(234,179,8,0.12)",
+        border: "1px solid rgba(234,179,8,0.38)",
+        borderRadius: 10,
+        padding: "14px 18px",
+        marginBottom: 24,
+      }}
+    >
+      <div style={{
+        fontSize: 11,
+        color: "#ca8a04",
+        fontFamily: "var(--font-mono)",
+        letterSpacing: "0.06em",
+        marginBottom: 6,
+        fontWeight: 600,
+      }}>
+        PORTFOLIO DEMO
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--text)", marginBottom: 6 }}>
+        This page uses artificial sample data
+      </div>
+      <p style={{ fontSize: 13, color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>
+        The {countryName} leads shown here are anonymized and fictional so real client information is never published.
+        Counts, regions, scores, and categories match a live deployment, but names, phones, emails, and enrichment fields are dummy placeholders.
+        Scraping, enrichment, and research are disabled on this demo site.
+      </p>
+    </div>
+  );
+}
+
 export function DemoNoticeCard({ feature = "scrape", onClose }) {
   const copy = FEATURE_COPY[feature] || FEATURE_COPY.scrape;
 
