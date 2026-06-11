@@ -12,6 +12,7 @@ export default async function AUPage({ searchParams }) {
       country="AU"
       countryName="Australia"
       initialFilterArea={params?.area || ""}
+      initialFilterState={params?.state || ""}
     />
   );
 }

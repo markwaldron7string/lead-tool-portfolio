@@ -629,7 +629,7 @@ function SlidePanel({ info, closing, leads, takenLeads, onClose, onMark, onMarkL
               onMarkLead={onMarkLead}
               onLeadClick={onLeadClick}
               TK={TK}
-              dimmed={takenLeads.includes(lead.title)}
+              dimmed={isTaken || takenLeads.includes(lead.title)}
             />
           ))
         )}
@@ -655,6 +655,130 @@ function SlidePanel({ info, closing, leads, takenLeads, onClose, onMark, onMarkL
       </div>
     </div>
   );
+}
+
+function StateRegionPanel({ stateRegionFilter, closing, leads, takenLeads, onClose, onMarkLead, onLeadClick, onViewTable, TK }) {
+  const stateLeads = useMemo(() => {
+    if (!stateRegionFilter || !leads) return [];
+    return leads
+      .filter((l) => l._category !== "EXCLUDED" && l.state === stateRegionFilter)
+      .sort((a, b) => (Number(b._score) || 0) - (Number(a._score) || 0));
+  }, [stateRegionFilter, leads]);
+
+  if (!stateRegionFilter) return null;
+
+  return (
+    <div style={{
+      position: "absolute", top: 0, right: 0, bottom: 0,
+      width: "min(320px, 100%)",
+      background: TK.panel,
+      borderLeft: `1px solid ${TK.panelBorder}`,
+      zIndex: 1000,
+      display: "flex", flexDirection: "column",
+      fontFamily: "system-ui, sans-serif",
+      animation: closing ? "slideOut 0.26s ease forwards" : "slideIn 0.25s ease",
+      overflow: "hidden",
+      cursor: "default",
+    }}>
+      <div style={{ padding: "14px 14px 10px", borderBottom: `1px solid ${TK.panelSub}`, flexShrink: 0 }}>
+        <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+          <div style={{ fontSize: 15, fontWeight: 700, color: TK.text, lineHeight: 1.3, flex: 1, paddingRight: 8 }}>
+            {stateRegionFilter}
+          </div>
+          <button onClick={onClose}
+            style={{ background: "none", border: "none", color: TK.muted, cursor: "pointer", fontSize: 18, padding: 0, lineHeight: 1, flexShrink: 0 }}>
+            ✕
+          </button>
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{
+            display: "inline-block", fontFamily: "monospace", fontSize: 10, fontWeight: 700,
+            color: "#22c55e", letterSpacing: "0.08em",
+            background: "rgba(34,197,94,0.12)", borderRadius: 4, padding: "2px 7px",
+          }}>ALL LEADS</span>
+          <span style={{ fontSize: 12, color: TK.muted }}>
+            {stateLeads.length} lead{stateLeads.length !== 1 ? "s" : ""}
+          </span>
+        </div>
+      </div>
+
+      <div style={{ flex: 1, overflowY: "auto" }}>
+        {stateLeads.length === 0 ? (
+          <div style={{ padding: "28px 16px", textAlign: "center", color: TK.muted, fontSize: 13, lineHeight: 1.7 }}>
+            No leads in {stateRegionFilter} yet.
+          </div>
+        ) : (
+          stateLeads.map((lead, i) => (
+            <LeadListRow
+              key={i}
+              lead={lead}
+              takenLeads={takenLeads}
+              onMarkLead={onMarkLead}
+              onLeadClick={onLeadClick}
+              TK={TK}
+              areaName={lead.city}
+              dimmed={takenLeads.includes(lead.title)}
+            />
+          ))
+        )}
+      </div>
+
+      <div style={{ padding: "10px 14px", borderTop: `1px solid ${TK.panelSub}`, flexShrink: 0 }}>
+        <button
+          type="button"
+          onClick={onViewTable}
+          style={{
+            background: "transparent", color: TK.text, fontWeight: 500, fontSize: 13,
+            padding: "9px", borderRadius: 7, border: `1px solid ${TK.panelBorder}`,
+            cursor: "pointer", width: "100%",
+          }}
+        >
+          View all in table →
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MapStateNavigator({ stateRegionFilter, areaMapping, mapConfig, geojson, onPhaseChangeRef }) {
+  const map = useMap();
+  const completedRef = useRef("");
+
+  useEffect(() => {
+    if (!stateRegionFilter || !areaMapping || !geojson || !mapConfig) return;
+    if (completedRef.current === stateRegionFilter) return;
+
+    let cancelled = false;
+
+    (async () => {
+      await whenMapReadyAsync(map);
+      if (cancelled) return;
+
+      onPhaseChangeRef.current?.("state_zooming");
+
+      const groupKey = mapConfig.countryCode === "NZ" ? "region" : "state";
+      const allCodes = [];
+      for (const [areaName, codes] of Object.entries(areaMapping)) {
+        const areaData = mapConfig.areas[areaName];
+        if (areaData?.[groupKey] === stateRegionFilter) {
+          allCodes.push(...codes);
+        }
+      }
+
+      const bounds = getBoundsForCodes(allCodes, geojson, mapConfig.codeProp);
+      if (bounds?.isValid()) {
+        await flyToPanelAwareBounds(map, bounds, { duration: FAST_ZOOM_DURATION, maxZoom: 9 });
+      }
+      if (cancelled) return;
+
+      completedRef.current = stateRegionFilter;
+      onPhaseChangeRef.current?.("state_focused");
+    })().catch(() => {});
+
+    return () => { cancelled = true; };
+  }, [stateRegionFilter, areaMapping, geojson, mapConfig, map, onPhaseChangeRef]);
+
+  return null;
 }
 
 function AggregateLeadsPanel({
@@ -799,6 +923,8 @@ export default function CoverageMap({
   theme = "dark",
   statusListFilter = null,
   onStatusListClose,
+  stateRegionFilter = "",
+  onStatePanelClose,
 }) {
   const mapConfig = useMemo(() => getMapConfig(country), [country]);
   const overview = useMemo(() => getOverviewSettings(mapConfig), [mapConfig]);
@@ -813,6 +939,7 @@ export default function CoverageMap({
   const [toast, setToast]               = useState(null);
   const [panelClosing, setPanelClosing]  = useState(false);
   const [aggregateClosing, setAggregateClosing] = useState(false);
+  const [stateRegionClosing, setStateRegionClosing] = useState(false);
   const [modalLead, setModalLead]        = useState(null);
   const geoJsonRef                      = useRef(null);
   const layersByCodeRef                 = useRef(new Map());
@@ -843,10 +970,15 @@ export default function CoverageMap({
       setPanelClosing(false);
       setSelectedArea(null);
       highlightAreaRef.current = null;
-      viewPhaseRef.current = targetArea ? "zoomed" : "overview";
-      setViewPhase(targetArea ? "zoomed" : "overview");
+      if (stateRegionFilter) {
+        viewPhaseRef.current = "state_focused";
+        setViewPhase("state_focused");
+      } else {
+        viewPhaseRef.current = targetArea ? "zoomed" : "overview";
+        setViewPhase(targetArea ? "zoomed" : "overview");
+      }
     }, 260);
-  }, [targetArea]);
+  }, [targetArea, stateRegionFilter]);
   const closeAggregatePanel = useCallback(() => {
     if (!statusListFilter) return;
     setAggregateClosing(true);
@@ -855,6 +987,19 @@ export default function CoverageMap({
       onStatusListClose?.();
     }, 260);
   }, [statusListFilter, onStatusListClose]);
+
+  const closeStatePanel = useCallback(() => {
+    setStateRegionClosing(true);
+    setTimeout(() => {
+      setStateRegionClosing(false);
+      onStatePanelClose?.();
+      if (mapInstanceRef.current && !targetArea) {
+        showMapOverview(mapInstanceRef.current, mapConfig);
+      }
+      viewPhaseRef.current = "overview";
+      setViewPhase("overview");
+    }, 260);
+  }, [onStatePanelClose, mapConfig, targetArea]);
   const resetHover                      = useCallback(() => {
     setTooltipInfo(null);
     setTooltipPos(null);
@@ -862,6 +1007,21 @@ export default function CoverageMap({
 
   // Theme tokens (memoised so sub-components don't re-render on unrelated state changes)
   const TK = useMemo(() => tk(theme), [theme]);
+
+  const stateAreaCodes = useMemo(() => {
+    if (!stateRegionFilter || !areaMapping || !mapConfig?.areas) return null;
+    const groupKey = mapConfig.countryCode === "NZ" ? "region" : "state";
+    const codes = new Set();
+    for (const [areaName, areaCodes] of Object.entries(areaMapping)) {
+      const areaData = mapConfig.areas[areaName];
+      if (areaData?.[groupKey] === stateRegionFilter) {
+        areaCodes.forEach((c) => codes.add(areaCodeKey(c)));
+      }
+    }
+    return codes;
+  }, [stateRegionFilter, areaMapping, mapConfig]);
+
+  const stateAreaCodesRef = useRef(null);
 
   // ── Fetch data ──────────────────────────────────────────────────────────
   useEffect(() => {
@@ -958,6 +1118,10 @@ export default function CoverageMap({
 
   useEffect(() => { sa4InfoMapRef.current = sa4InfoMap; }, [sa4InfoMap]);
   useEffect(() => { selectedAreaRef.current = selectedArea; }, [selectedArea]);
+  useEffect(() => {
+    stateAreaCodesRef.current = stateAreaCodes;
+    if (stateAreaCodes?.size) requestAnimationFrame(() => applyRegionStylesRef.current?.());
+  }, [stateAreaCodes]);
 
   useEffect(() => {
     if (!statusListFilter) return;
@@ -1028,13 +1192,52 @@ export default function CoverageMap({
     const key = areaCodeKey(code);
     const phase = viewPhaseRef.current;
 
-    if (phase === "overview" || phase === "zooming") {
+    if (phase === "overview" || phase === "zooming" || phase === "state_overview" || phase === "state_zooming") {
       return {
         fillColor: TK.overviewFill,
         fillOpacity: hover ? TK.overviewFillOpacity + 0.12 : TK.overviewFillOpacity,
         color: TK.overviewBorder,
         weight: hover ? 1.2 : 0.6,
         opacity: 1,
+      };
+    }
+
+    if (phase === "state_focused" && stateAreaCodesRef.current?.size > 0) {
+      const inState = stateAreaCodesRef.current.has(key);
+      if (inState) {
+        if (!info) {
+          return {
+            fillColor: TK.COLORS.outside,
+            fillOpacity: 0,
+            color: TK.BORDER_COLOR.outside,
+            weight: 0.5,
+            opacity: 0.5,
+          };
+        }
+        const baseOpacity = TK.FILL_OPACITY[info.status];
+        return {
+          fillColor: TK.COLORS[info.status],
+          fillOpacity: hover ? Math.min(0.95, baseOpacity + 0.20) : baseOpacity,
+          color: hover ? "#ffffff" : TK.BORDER_COLOR[info.status],
+          weight: hover ? 2 : 0.8,
+          opacity: 1,
+        };
+      }
+      if (info) {
+        return {
+          fillColor: TK.COLORS[info.status],
+          fillOpacity: TK.FILL_OPACITY[info.status] * TK.dimmedFill,
+          color: TK.BORDER_COLOR[info.status],
+          weight: 0.6,
+          opacity: TK.dimmedBorder,
+        };
+      }
+      return {
+        fillColor: TK.COLORS.outside,
+        fillOpacity: 0,
+        color: TK.BORDER_COLOR.outside,
+        weight: 0.4,
+        opacity: TK.dimmedBorder * 0.6,
       };
     }
 
@@ -1161,7 +1364,9 @@ export default function CoverageMap({
 
     layer.on({
       mouseover(e) {
-        if (viewPhaseRef.current !== "overview" || selectedAreaRef.current || highlightAreaRef.current) return;
+        const phase = viewPhaseRef.current;
+        if ((phase !== "overview" && phase !== "state_focused") || selectedAreaRef.current) return;
+        if (phase === "overview" && highlightAreaRef.current) return;
         const info = getInfo();
         hoveredLayerRef.current = { reset: () => applyStyle() };
         setTooltipPos({ x: e.originalEvent.clientX, y: e.originalEvent.clientY });
@@ -1172,11 +1377,15 @@ export default function CoverageMap({
         layer.bringToFront();
       },
       mousemove(e) {
-        if (viewPhaseRef.current !== "overview" || selectedAreaRef.current || highlightAreaRef.current) return;
+        const phase = viewPhaseRef.current;
+        if ((phase !== "overview" && phase !== "state_focused") || selectedAreaRef.current) return;
+        if (phase === "overview" && highlightAreaRef.current) return;
         setTooltipPos({ x: e.originalEvent.clientX, y: e.originalEvent.clientY });
       },
       mouseout() {
-        if (viewPhaseRef.current !== "overview" || selectedAreaRef.current || highlightAreaRef.current) return;
+        const phase = viewPhaseRef.current;
+        if ((phase !== "overview" && phase !== "state_focused") || selectedAreaRef.current) return;
+        if (phase === "overview" && highlightAreaRef.current) return;
         hoveredLayerRef.current = null;
         setTooltipInfo(null);
         setTooltipPos(null);
@@ -1322,6 +1531,15 @@ export default function CoverageMap({
             onAfterFlashRef={onAfterFlashRef}
           />
         )}
+        {stateRegionFilter && areaMapping && geojson && !targetArea && (
+          <MapStateNavigator
+            stateRegionFilter={stateRegionFilter}
+            areaMapping={areaMapping}
+            mapConfig={mapConfig}
+            geojson={geojson}
+            onPhaseChangeRef={onPhaseChangeRef}
+          />
+        )}
       </MapContainer>
 
       {(selectedArea || statusListFilter) && (
@@ -1353,6 +1571,23 @@ export default function CoverageMap({
         onLeadClick={setModalLead}
         TK={TK}
       />
+      {stateRegionFilter && !selectedArea && !statusListFilter && (
+        <StateRegionPanel
+          stateRegionFilter={stateRegionFilter}
+          closing={stateRegionClosing}
+          leads={leads}
+          takenLeads={takenLeads}
+          onClose={closeStatePanel}
+          onMarkLead={handleMarkLead}
+          onLeadClick={setModalLead}
+          onViewTable={() => {
+            closeStatePanel();
+            const countryPath = mapConfig.countryCode.toLowerCase();
+            window.location.href = `/${countryPath}?state=${encodeURIComponent(stateRegionFilter)}`;
+          }}
+          TK={TK}
+        />
+      )}
       {statusListFilter && (
         <AggregateLeadsPanel
           filter={statusListFilter}

@@ -47,6 +47,7 @@ export default function NewZealandMapPage() {
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedArea, setSelectedArea]   = useState("");
   const [statusListFilter, setStatusListFilter] = useState(null);
+  const [stateRegionFilter, setStateRegionFilter] = useState("");
   const [theme, setTheme]                 = useState("dark");
   const mapRef                            = useRef(null);
 
@@ -61,6 +62,7 @@ export default function NewZealandMapPage() {
     setJumpArea(intent.zoom === "area" ? (intent.area || "") : "");
     if (intent.panelArea || intent.area) setSelectedArea(intent.panelArea || intent.area);
     if (intent.group) setSelectedGroup(intent.group);
+    if (intent.statePanel && intent.region) setStateRegionFilter(intent.region);
     setJumpToken((t) => t + 1);
   }, []);
 
@@ -177,6 +179,8 @@ export default function NewZealandMapPage() {
           theme={theme}
           statusListFilter={statusListFilter}
           onStatusListClose={() => setStatusListFilter(null)}
+          stateRegionFilter={stateRegionFilter}
+          onStatePanelClose={() => setStateRegionFilter("")}
         />
       </div>
     </div>

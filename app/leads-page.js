@@ -536,6 +536,7 @@ export default function LeadsPage({
   country,
   countryName,
   initialFilterArea,
+  initialFilterState,
 }) {
   const [theme, toggleTheme] = useTheme();
 
@@ -547,7 +548,7 @@ export default function LeadsPage({
   const [isDragging, setIsDragging] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [filterState, setFilterState] = useState("");
+  const [filterState, setFilterState] = useState(initialFilterState || "");
   const [filterCategory, setFilterCategory] = useState("");
   const [filterScore, setFilterScore] = useState(0);
   const [filterSource, setFilterSource] = useState("");
@@ -587,6 +588,7 @@ export default function LeadsPage({
   const tableScrollControlsEnabled = !isMobile && (tableCanScrollLeft || tableCanScrollRight);
   const [bannerDismissed, setBannerDismissed] = useState(false);
   const [takenLeads, setTakenLeads]           = useState([]);
+  const [takenAreas, setTakenAreas]           = useState([]);
   const [modalLead, setModalLead]             = useState(null);
   const [demoNotice, setDemoNotice]           = useState(null);
 
@@ -627,11 +629,15 @@ export default function LeadsPage({
   }, [showColPanel]);
 
   useEffect(() => {
-    if (country !== "AU") return;
+    if (country !== "AU" && country !== "NZ") return;
     let cancelled = false;
     fetch("/api/exclusivity")
       .then((r) => r.ok ? r.json() : null)
-      .then((data) => { if (!data || cancelled) return; setTakenLeads(data.takenLeads || []); })
+      .then((data) => {
+        if (!data || cancelled) return;
+        setTakenLeads(data.takenLeads || []);
+        setTakenAreas(data.taken || []);
+      })
       .catch(() => {});
     return () => { cancelled = true; };
   }, [country]);
@@ -1545,7 +1551,8 @@ export default function LeadsPage({
                     const isResearching = !!researching[lead.title];
                     const isResearchOpen = !!researchOpen[lead.title];
                     const isExcluded    = lead._category === "EXCLUDED";
-                    const isLeadTaken   = hasMap && takenLeads.includes(lead.title);
+                    const leadArea      = hasMap ? getLeadArea(lead, country) : null;
+                    const isLeadTaken   = hasMap && (takenLeads.includes(lead.title) || (leadArea && takenAreas.includes(leadArea)));
                     const hasWebsite    = !!lead.website;
                     const hasResearch   = !!lead._research && !lead._research.error;
                     const colSpan       = visibleCols.length + 1;

@@ -45,6 +45,7 @@ export default function AustraliaMapPage() {
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedArea, setSelectedArea]   = useState("");
   const [statusListFilter, setStatusListFilter] = useState(null);
+  const [stateRegionFilter, setStateRegionFilter] = useState("");
   const [theme, setTheme]                 = useState("dark");
   const mapRef                            = useRef(null);
 
@@ -60,6 +61,7 @@ export default function AustraliaMapPage() {
     if (intent.panelArea) setSelectedArea(intent.panelArea);
     else if (intent.area) setSelectedArea(intent.area);
     if (intent.group) setSelectedGroup(intent.group);
+    if (intent.statePanel && intent.state) setStateRegionFilter(intent.state);
     setJumpToken((t) => t + 1);
   }, []);
 
@@ -174,6 +176,8 @@ export default function AustraliaMapPage() {
           theme={theme}
           statusListFilter={statusListFilter}
           onStatusListClose={() => setStatusListFilter(null)}
+          stateRegionFilter={stateRegionFilter}
+          onStatePanelClose={() => setStateRegionFilter("")}
         />
       </div>
     </div>

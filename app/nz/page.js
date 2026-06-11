@@ -12,6 +12,7 @@ export default async function NZPage({ searchParams }) {
       country="NZ"
       countryName="New Zealand"
       initialFilterArea={params?.area || ""}
+      initialFilterState={params?.state || params?.region || ""}
     />
   );
 }
