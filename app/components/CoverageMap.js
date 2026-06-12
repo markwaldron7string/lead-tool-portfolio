@@ -27,13 +27,13 @@ function tk(theme) {
     FILL_OPACITY: {
       available: d ? 0.65 : 0.55,
       taken:     d ? 0.55 : 0.40,
-      noLeads:   d ? 0.50 : 0.30,
+      noLeads:   d ? 0.0  : 0.12,
       outside:   d ? 0.0  : 0.22,
     },
     BORDER_COLOR: {
       available: d ? "rgba(34,197,94,0.90)"   : "rgba(34,197,94,0.4)",
       taken:     d ? "rgba(148,163,184,0.75)" : "rgba(100,116,139,0.4)",
-      noLeads:   d ? "rgba(148,163,184,0.80)" : "rgba(148,163,184,0.4)",
+      noLeads:   d ? "rgba(100,116,139,0.35)" : "rgba(148,163,184,0.4)",
       outside:   d ? "rgba(203,213,225,0.30)" : "rgba(0,0,0,0.04)",
     },
     tileUrl:     d
@@ -958,6 +958,7 @@ export default function CoverageMap({
   const targetArea = panelArea || jumpArea || "";
   const areaForPanel = panelArea || jumpArea;
   const panelOpenedForRef                     = useRef("");
+  const zoomAndOpenPanelRef                   = useRef(null);
   const targetAreaRef                         = useRef(targetArea);
   targetAreaRef.current = targetArea;
   const stableOnMapReady                      = useCallback((map) => {
@@ -1164,6 +1165,56 @@ export default function CoverageMap({
     setSelectedArea({ ...info });
   }, [areaMapping, sa4InfoMap, onStatusListClose]);
 
+  const zoomAndOpenPanel = useCallback((areaName, info) => {
+    const map = mapInstanceRef.current;
+    if (!map || !areaName || !areaMapping) return;
+    const codes = areaMapping[areaName];
+    if (!codes?.length) return;
+
+    const displayInfo = info ?? { areaName, status: "noLeads", count: 0, best: null };
+
+    highlightAreaRef.current = areaName;
+    viewPhaseRef.current = "zooming";
+    setViewPhase("zooming");
+
+    // For AU, zoom to the full state so the area sits in context rather than
+    // filling the entire viewport. For NZ, zoom directly to the city area.
+    const groupKey = mapConfig.countryCode === "NZ" ? "region" : "state";
+    const parentGroup = mapConfig.areas?.[areaName]?.[groupKey];
+    let zoomBounds = null;
+    let zoomMaxZoom = 14;
+
+    if (parentGroup) {
+      const groupCodes = [];
+      for (const [name, areaCodes] of Object.entries(areaMapping)) {
+        if (mapConfig.areas?.[name]?.[groupKey] === parentGroup) {
+          groupCodes.push(...areaCodes);
+        }
+      }
+      zoomBounds = getBoundsForCodes(groupCodes, geojson, mapConfig.codeProp);
+      zoomMaxZoom = mapConfig.countryCode === "NZ" ? 10 : 9;
+    }
+
+    if (!zoomBounds?.isValid()) {
+      zoomBounds = resolveAreaBounds(areaName, codes, geojson, mapConfig);
+    }
+
+    const openPanel = () => {
+      viewPhaseRef.current = "focused";
+      setViewPhase("focused");
+      setPanelClosing(false);
+      onStatusListClose?.();
+      setSelectedArea({ ...displayInfo });
+    };
+
+    if (zoomBounds?.isValid()) {
+      flyToPanelAwareBounds(map, zoomBounds, { duration: FAST_ZOOM_DURATION, maxZoom: zoomMaxZoom }).then(openPanel);
+    } else {
+      openPanel();
+    }
+  }, [areaMapping, geojson, mapConfig, onStatusListClose]);
+  zoomAndOpenPanelRef.current = zoomAndOpenPanel;
+
   const onJumpComplete = useCallback(() => {
     if (autoOpenPanel && areaForPanel) openPanelForArea(areaForPanel);
   }, [autoOpenPanel, areaForPanel, openPanelForArea]);
@@ -1193,6 +1244,15 @@ export default function CoverageMap({
     const phase = viewPhaseRef.current;
 
     if (phase === "overview" || phase === "zooming" || phase === "state_overview" || phase === "state_zooming") {
+      if (!info || info.status === "noLeads") {
+        return {
+          fillColor: TK.COLORS.outside,
+          fillOpacity: 0,
+          color: TK.BORDER_COLOR.outside,
+          weight: 0.5,
+          opacity: 1,
+        };
+      }
       return {
         fillColor: TK.overviewFill,
         fillOpacity: hover ? TK.overviewFillOpacity + 0.12 : TK.overviewFillOpacity,
@@ -1394,12 +1454,7 @@ export default function CoverageMap({
       click() {
         const info = getInfo();
         if (!info) return;
-        setPanelClosing(false);
-        onStatusListClose?.();
-        highlightAreaRef.current = info.areaName;
-        viewPhaseRef.current = "focused";
-        setViewPhase("focused");
-        setSelectedArea({ ...info });
+        zoomAndOpenPanelRef.current?.(info.areaName, info);
       },
     });
   }, [mapConfig.codeProp, mapConfig.nameProp, onStatusListClose]);

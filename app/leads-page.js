@@ -574,6 +574,7 @@ export default function LeadsPage({
 
   const [enriching, setEnriching] = useState({});
   const [enrichProgress, setEnrichProgress] = useState(null);
+  const [enrichSummary, setEnrichSummary] = useState(null);
   const [bulkRunning, setBulkRunning] = useState(false);
   const [researching, setResearching] = useState({});
   const [researchOpen, setResearchOpen] = useState({});
@@ -864,8 +865,10 @@ export default function LeadsPage({
     if (!toEnrich.length) return;
     cancelRef.current = false;
     setBulkRunning(true);
+    setEnrichSummary(null);
     setEnrichProgress({ done: 0, total: toEnrich.length });
     let done = 0;
+    let newEmails = 0, newNames = 0, newLinkedIn = 0, newABNs = 0;
     for (let i = 0; i < toEnrich.length; i += BATCH_SIZE) {
       if (cancelRef.current) break;
       await Promise.all(
@@ -875,6 +878,11 @@ export default function LeadsPage({
           setEnriching((prev) => ({ ...prev, [key]: true }));
           try {
             const result = await enrichLead(lead);
+            if (!lead.emails?.trim() && result.emails?.trim()) newEmails++;
+            if (!lead.founder_name?.trim() && result.founder_name?.trim()) newNames++;
+            if (!lead.linkedin_company?.trim() && !lead.linkedin_personal?.trim() &&
+                (result.linkedin_company?.trim() || result.linkedin_personal?.trim())) newLinkedIn++;
+            if (!lead.abn?.trim() && result.abn?.trim()) newABNs++;
             setLeads((prev) => prev.map((l) => {
               if (l.title !== key) return l;
               const u = { ...l, ...result };
@@ -893,6 +901,7 @@ export default function LeadsPage({
     }
     setBulkRunning(false);
     setEnrichProgress(null);
+    setEnrichSummary({ newEmails, newNames, newLinkedIn, newABNs, total: done, cancelled: cancelRef.current });
     cancelRef.current = false;
   }, [leads]);
 
@@ -900,6 +909,7 @@ export default function LeadsPage({
     cancelRef.current = true;
     setBulkRunning(false);
     setEnrichProgress(null);
+    setEnrichSummary(null);
     setEnriching({});
   };
 
@@ -1307,6 +1317,38 @@ export default function LeadsPage({
             marginBottom: 4,
           }}>
             ⚡ Enrichment in progress - export and scraping are disabled until complete
+          </div>
+        )}
+
+        {/* Enrichment complete summary */}
+        {enrichSummary && !bulkRunning && (
+          <div style={{
+            background: "rgba(167,139,250,0.08)",
+            border: "1px solid rgba(167,139,250,0.25)",
+            borderRadius: 7,
+            padding: "14px 16px",
+            marginTop: 8,
+          }}>
+            <div style={{ fontSize: 13, fontWeight: 500, color: "#a78bfa", marginBottom: 8 }}>
+              ⚡ Enrichment complete — {enrichSummary.total.toLocaleString()} leads processed
+            </div>
+            <div style={{ display: "flex", gap: 20, flexWrap: "wrap", marginBottom: 10 }}>
+              <span style={{ color: "var(--green)", fontSize: 13 }}>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>+{enrichSummary.newEmails}</strong> new emails
+              </span>
+              <span style={{ color: "var(--green)", fontSize: 13 }}>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>+{enrichSummary.newNames}</strong> new names
+              </span>
+              <span style={{ color: "var(--green)", fontSize: 13 }}>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>+{enrichSummary.newLinkedIn}</strong> new LinkedIn
+              </span>
+              <span style={{ color: "var(--green)", fontSize: 13 }}>
+                <strong style={{ fontFamily: "var(--font-mono)" }}>+{enrichSummary.newABNs}</strong> new {businessIdLabel}s
+              </span>
+            </div>
+            <div style={{ fontSize: 12, color: "var(--muted)" }}>
+              💡 Export your CSV to save the enriched data, then check the map to see coverage across regions.
+            </div>
           </div>
         )}
 

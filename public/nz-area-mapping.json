@@ -53,5 +53,59 @@
     "33",
     "34",
     "35"
+  ],
+  "Wanaka": [
+    "53"
+  ],
+  "Whangarei": [
+    "36"
+  ],
+  "Taupo": [
+    "37"
+  ],
+  "Gisborne": [
+    "38"
+  ],
+  "Napier": [
+    "39"
+  ],
+  "Hastings": [
+    "40"
+  ],
+  "Whanganui": [
+    "41"
+  ],
+  "Lower Hutt": [
+    "42"
+  ],
+  "Upper Hutt": [
+    "43"
+  ],
+  "Porirua": [
+    "44"
+  ],
+  "Kapiti Coast": [
+    "45"
+  ],
+  "Masterton": [
+    "46"
+  ],
+  "Greymouth": [
+    "47"
+  ],
+  "Ashburton": [
+    "48"
+  ],
+  "Timaru": [
+    "49"
+  ],
+  "Queenstown": [
+    "50"
+  ],
+  "Invercargill": [
+    "51"
+  ],
+  "Blenheim": [
+    "52"
   ]
 }

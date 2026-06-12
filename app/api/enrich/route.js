@@ -195,6 +195,7 @@ async function getPageData(baseUrl) {
 // ── GPT extraction ────────────────────────────────────────────────────────────
 
 async function extractWithGPT(pageText, socialContext, businessName, existingEmail) {
+  const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const prompt = `You are extracting contact information from an Australian buyers agent business website.
 
 Business name: ${businessName}
@@ -230,7 +231,8 @@ Important: for founder_name, never return a page heading, service name, menu ite
   try {
     const clean = raw.replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
     return JSON.parse(clean);
-  } catch {
+  } catch (e) {
+    console.error('GPT parse error:', e.message, 'raw:', raw.slice(0, 200));
     return { founder_name: null, job_title: null, email: null, linkedin_company: null, linkedin_personal: null, instagram: null, facebook: null };
   }
 }
@@ -239,7 +241,6 @@ Important: for founder_name, never return a page heading, service name, menu ite
 
 export async function POST(request) {
   try {
-    const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const { website, businessName, existingEmail } = await request.json();
 
     if (!website) return Response.json({ error: 'No website provided' }, { status: 400 });
@@ -279,7 +280,13 @@ export async function POST(request) {
       .join('\n');
 
     // GPT fills in contact info + confirms/supplements social URLs
-    const result = await extractWithGPT(page.text, socialContext || regexSocial.all, businessName, existingEmail);
+    let result;
+    try {
+      result = await extractWithGPT(page.text, socialContext || regexSocial.all, businessName, existingEmail);
+    } catch (gptErr) {
+      console.error('extractWithGPT threw:', gptErr.message);
+      result = { founder_name: null, job_title: null, email: null, linkedin_company: null, linkedin_personal: null, instagram: null, facebook: null };
+    }
 
     // Merge: regex/JSON-LD social takes priority over GPT guesses for URLs
     // (GPT is better at names/emails, regex is better at URLs)
