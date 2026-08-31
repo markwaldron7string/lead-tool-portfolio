@@ -6,8 +6,12 @@
  * of the lead scraper. Run with:  node scripts/generate_sample_data.js
  *
  * Output:
- *   public/leads_au.csv  - 75 fake Australian buyers-agent leads
- *   public/leads_nz.csv  - 25 fake New Zealand buyers-agent leads
+ *   public/leads_au.csv  - 7,649 fake Australian buyers-agent leads
+ *   public/leads_nz.csv  - 1,879 fake New Zealand buyers-agent leads
+ *
+ * These counts match production volume. Prefer
+ * `node scripts/anonymize_portfolio_data.js --pad-only` when the public
+ * CSVs already exist and you only need to resize them.
  *
  * All data is fictional. No real business names, phone numbers, email
  * addresses or ABN/NZBN numbers are used.
@@ -376,7 +380,7 @@ function generateAULead() {
   // Area word used in name (50% use city, 50% use suburb word)
   const areaWord = prob(0.5) ? city : pick(AU_SUBURB_WORDS);
   const pattern  = pick(AU_NAME_PATTERNS);
-  const businessName = pattern(areaWord, surname, firstName);
+  const businessName = `${pattern(areaWord, surname, firstName)} #${randInt(1, 999999)}`;
   const slug     = slugify(businessName);
   const domain   = `${slug}.com.au`;
   const website  = `https://www.${domain}`;
@@ -455,7 +459,7 @@ function generateNZLead() {
 
   const areaWord = prob(0.5) ? city : pick(NZ_SUBURB_WORDS);
   const pattern  = pick(NZ_NAME_PATTERNS);
-  const businessName = pattern(areaWord, surname, firstName);
+  const businessName = `${pattern(areaWord, surname, firstName)} #${randInt(1, 999999)}`;
   const slug     = slugify(businessName);
   const domain   = `${slug}.co.nz`;
   const website  = `https://www.${domain}`;
@@ -569,8 +573,8 @@ function generateUnique(fn, count, maxAttempts = count * 8) {
 
 console.log("Generating sample data...\n");
 
-const auRows = generateUnique(generateAULead, 75);
-const nzRows = generateUnique(generateNZLead, 25);
+const auRows = generateUnique(generateAULead, 7649);
+const nzRows = generateUnique(generateNZLead, 1879);
 
 const publicDir = path.resolve(__dirname, "..", "public");
 fs.writeFileSync(path.join(publicDir, "leads_au.csv"), buildCSV(auRows), "utf-8");

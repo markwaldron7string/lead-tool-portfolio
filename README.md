@@ -11,7 +11,7 @@
 
 **[→ Live Demo](https://buyersagent-leadscraper.vercel.app/)**
 
-> **Note:** This is the public portfolio version. The business data in this version is artificial, and the scraping and enrichment features are disabled. The production version, with the real client dataset, is kept private.
+> **Note:** This is the public portfolio version. The business data in this version is artificial, and the scraping and enrichment features are disabled. Dummy CSVs are sized to production volume — **7,649** Australian leads and **1,879** New Zealand leads — so the demo UI matches the live tool. The production version, with the real client dataset, is kept private.
 
 -
 
@@ -21,10 +21,12 @@
 
 ## Headline Metrics
 
-| Market | Leads | Emails | Founder Names | LinkedIn Pages | Verified (ABN/NZBN) |
-|-|-|-|-|-|-|
-| 🇦🇺 Australia | **5,783** | 2,066 (36%) | 2,620 (45%) | 1,741 (30%) | 4,941 (85%) |
-| 🇳🇿 New Zealand | **481** | 200 (42%) | 226 (47%) | 216 (45%) | 344 (72%) |
+Lead counts are from the **production tool**. This repo ships **dummy data** with those same totals so the country selector and dashboards match production volume. Names, phones, emails, and social URLs in the demo are fictional.
+
+| Market | Production leads | Demo dummy leads | Emails | Founder Names | LinkedIn Pages | Verified (ABN/NZBN) |
+|-|-|-|-|-|-|-|
+| 🇦🇺 Australia | **7,649** | 7,649 | 36% | 45% | 30% | 85% |
+| 🇳🇿 New Zealand | **1,879** | 1,879 | 42% | 47% | 45% | 72% |
 
 - **101 geographic areas** covered across Australia, matched to client's territory map
 - **11,494 cross-area duplicates** caught and removed automatically
@@ -87,8 +89,8 @@ lead-tool-portfolio/
   lib/
     processor.js              # Dedup, classify, score, filter, CSV export
   public/
-    leads_au.csv              # AU dataset (auto-loaded on startup)
-    leads_nz.csv              # NZ dataset (auto-loaded on startup)
+    leads_au.csv              # Dummy AU dataset (7,649 leads, matches production count)
+    leads_nz.csv              # Dummy NZ dataset (1,879 leads, matches production count)
 ```
 
 ### How the Classifier Works
@@ -132,7 +134,7 @@ For each lead, the enrichment route:
 4. GPT returns: founder name, job title, email, LinkedIn company, LinkedIn personal, Instagram, Facebook
 5. Runs ABN/NZBN lookup in parallel (two-step: name search → entity detail fetch)
 
-Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~5,700 leads) ≈ $5.70.
+Cost: ~$0.001 per lead with gpt-4o-mini. Full AU dataset (~7,650 leads) ≈ $7.65.
 
 -
 
@@ -180,7 +182,7 @@ NEXT_PUBLIC_DEMO_MODE=true npm run dev
 
 Open [http://localhost:3000](http://localhost:3000)
 
-> **Note:** `NEXT_PUBLIC_DEMO_MODE=true` loads the sample dataset and disables scraping, enrichment, and the auth gate. Omit it (and supply real API keys in `.env.local`) to run the full production version locally.
+> **Note:** `NEXT_PUBLIC_DEMO_MODE=true` loads the dummy dataset (7,649 AU / 1,879 NZ fictional leads) and disables scraping, enrichment, and the auth gate. Omit it (and supply real API keys in `.env.local`) to run the full production version locally.
 
 -
 
@@ -195,7 +197,7 @@ Open [http://localhost:3000](http://localhost:3000)
 
 | Service | Cost | Free tier |
 |-|-|-|
-| OpenAI gpt-4o-mini | ~$5.70 per full AU enrichment run | $5 signup credit |
+| OpenAI gpt-4o-mini | ~$7.65 per full AU enrichment run | $5 signup credit |
 | Google Places API | ~$17 per 1,000 searches | $200/month credit |
 | ABR (ABN lookup) | Free | Unlimited |
 | NZ Companies Office | Free | Unlimited |

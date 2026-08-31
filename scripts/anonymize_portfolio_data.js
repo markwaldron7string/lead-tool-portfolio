@@ -9,6 +9,10 @@
  * Usage:
  *   node scripts/anonymize_portfolio_data.js
  *   node scripts/anonymize_portfolio_data.js --source ../lead-tool/public
+ *   node scripts/anonymize_portfolio_data.js --pad-only
+ *
+ * `--pad-only` resizes the existing public dummy CSVs to TARGET_COUNTS
+ * without needing the private production source.
  */
 
 const fs = require("fs");
@@ -18,6 +22,16 @@ const Papa = require("papaparse");
 const ROOT = path.join(__dirname, "..");
 const DEFAULT_SOURCE = path.join(__dirname, "..", "..", "lead-tool", "public");
 const OUT_DIR = path.join(ROOT, "public");
+
+// Production lead counts the public dummy CSVs should match.
+const TARGET_COUNTS = { AU: 7649, NZ: 1879 };
+
+const CSV_COLUMNS = [
+  "Business Name", "Phone", "Website", "Street", "City", "State",
+  "Rating", "Reviews", "Emails", "Founder Name",
+  "LinkedIn Company", "LinkedIn Personal", "Instagram", "Facebook",
+  "ABN", "Entity Type", "Category", "Lead Score", "Source Search", "Research Summary",
+];
 
 const SILLY_ADJECTIVES = [
   "Totally Fake",
@@ -72,12 +86,16 @@ const SILLY_STREETS = [
 function parseArgs() {
   const args = process.argv.slice(2);
   let source = DEFAULT_SOURCE;
+  let padOnly = false;
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--source" && args[i + 1]) {
       source = path.resolve(args[++i]);
     }
+    if (args[i] === "--pad-only") {
+      padOnly = true;
+    }
   }
-  return { source };
+  return { source, padOnly };
 }
 
 function mulberry32(seed) {
@@ -214,33 +232,74 @@ function summarize(label, rows) {
   console.log(`  with rating: ${countFilled("Rating")}`);
 }
 
+function readCsv(filePath) {
+  const text = fs.readFileSync(filePath, "utf8");
+  const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
+  if (parsed.errors.length) {
+    throw new Error(`${path.basename(filePath)}: ${parsed.errors[0].message}`);
+  }
+  return parsed.data;
+}
+
+function writeCsv(filePath, rows) {
+  const csv = Papa.unparse(rows, { columns: CSV_COLUMNS });
+  fs.writeFileSync(filePath, csv.endsWith("\n") ? csv : `${csv}\n`, "utf8");
+}
+
+function padRows(rows, country, target) {
+  if (rows.length === target) return rows;
+  if (rows.length > target) return rows.slice(0, target);
+
+  const templates = rows.length ? rows : [];
+  if (!templates.length) {
+    throw new Error(`Cannot pad ${country} to ${target}: no template rows`);
+  }
+
+  // Seeded random sample so extra rows follow the overall fill-rate
+  // and geo mix instead of cloning the score-sorted head of the file.
+  const rand = mulberry32(country === "NZ" ? 0x4e5a0001 : 0x41550001);
+  const out = [...rows];
+  while (out.length < target) {
+    const template = templates[Math.floor(rand() * templates.length)];
+    out.push(anonymizeRow(template, out.length, country));
+  }
+  return out;
+}
+
 function processFile(sourceDir, filename, country) {
   const inputPath = path.join(sourceDir, filename);
   const outputPath = path.join(OUT_DIR, filename);
-  const text = fs.readFileSync(inputPath, "utf8");
-  const parsed = Papa.parse(text, { header: true, skipEmptyLines: true });
-  if (parsed.errors.length) {
-    throw new Error(`${filename}: ${parsed.errors[0].message}`);
-  }
+  const rows = padRows(
+    readCsv(inputPath).map((row, index) => anonymizeRow(row, index, country)),
+    country,
+    TARGET_COUNTS[country],
+  );
+  writeCsv(outputPath, rows);
+  summarize(filename, rows);
+  console.log(`  wrote ${outputPath}`);
+  return rows.length;
+}
 
-  const rows = parsed.data.map((row, index) => anonymizeRow(row, index, country));
-  const csv = Papa.unparse(rows, {
-    columns: [
-      "Business Name", "Phone", "Website", "Street", "City", "State",
-      "Rating", "Reviews", "Emails", "Founder Name",
-      "LinkedIn Company", "LinkedIn Personal", "Instagram", "Facebook",
-      "ABN", "Entity Type", "Category", "Lead Score", "Source Search", "Research Summary",
-    ],
-  });
-
-  fs.writeFileSync(outputPath, csv, "utf8");
+function padPublicFile(filename, country) {
+  const outputPath = path.join(OUT_DIR, filename);
+  const rows = padRows(readCsv(outputPath), country, TARGET_COUNTS[country]);
+  writeCsv(outputPath, rows);
   summarize(filename, rows);
   console.log(`  wrote ${outputPath}`);
   return rows.length;
 }
 
 function main() {
-  const { source } = parseArgs();
+  const { source, padOnly } = parseArgs();
+
+  if (padOnly) {
+    console.log(`Padding public dummy CSVs to ${TARGET_COUNTS.AU} AU + ${TARGET_COUNTS.NZ} NZ`);
+    const au = padPublicFile("leads_au.csv", "AU");
+    const nz = padPublicFile("leads_nz.csv", "NZ");
+    console.log(`\nDone. Dummy dataset is ${au} AU + ${nz} NZ leads.`);
+    return;
+  }
+
   if (!fs.existsSync(source)) {
     console.error(`Source directory not found: ${source}`);
     process.exit(1);

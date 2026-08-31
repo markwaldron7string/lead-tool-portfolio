@@ -14,7 +14,8 @@
     "start": "next start --hostname 127.0.0.1 --port 3000",
     "lint": "eslint",
     "fetch:nz-boundaries": "node scripts/fetch-nz-boundaries.js",
-    "anonymize:data": "node scripts/anonymize_portfolio_data.js"
+    "anonymize:data": "node scripts/anonymize_portfolio_data.js",
+    "pad:data": "node scripts/anonymize_portfolio_data.js --pad-only"
   },
   "dependencies": {
     "@upstash/redis": "^1.38.0",
