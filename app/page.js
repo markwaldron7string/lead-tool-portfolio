@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useIsMobile } from "@/lib/use-media-query";
+import { useTheme } from "@/lib/use-theme";
 
 function SunIcon() {
   return (
@@ -26,24 +27,6 @@ function MoonIcon() {
       <path d="M21.752 15.002A9.718 9.718 0 0 1 18 15.75c-5.385 0-9.75-4.365-9.75-9.75 0-1.33.266-2.597.748-3.752A9.753 9.753 0 0 0 3 11.25C3 16.635 7.365 21 12.75 21a9.753 9.753 0 0 0 9.002-5.998Z"/>
     </svg>
   );
-}
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") || "dark";
-    setTheme(stored);
-    document.documentElement.setAttribute("data-theme", stored);
-  }, []);
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", next);
-      document.documentElement.setAttribute("data-theme", next);
-      return next;
-    });
-  }, []);
-  return [theme, toggleTheme];
 }
 
 export default function HomePage() {

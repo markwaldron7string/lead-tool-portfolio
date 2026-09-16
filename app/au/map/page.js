@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useEffect, useLayoutEffect, useRef, useCallback } from "react";
+import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import dynamic from "next/dynamic";
+import { useSearchParams } from "next/navigation";
 import Papa from "papaparse";
 import { processFiles } from "@/lib/processor";
 import { AU_AREA_GROUPS } from "@/lib/au-areas";
 import { parseAuMapUrl } from "@/lib/au-map-nav";
 import { MAP_OCEAN_BG } from "@/lib/map-config";
 import { MapPageHeader, getMapHeaderTokens } from "@/app/components/MapPageHeader";
+import { useTheme } from "@/lib/use-theme";
 
 function MapSpinner({ theme }) {
   const dark = theme !== "light";
@@ -33,52 +35,34 @@ const AustraliaMap = dynamic(
 );
 
 export default function AustraliaMapPage() {
+  return (
+    <Suspense fallback={<div style={{ height: "100vh", display: "flex" }}><MapSpinner theme="dark" /></div>}>
+      <AustraliaMapContent />
+    </Suspense>
+  );
+}
+
+function AustraliaMapContent() {
+  const searchParams = useSearchParams();
+  const initialIntent = parseAuMapUrl(searchParams.toString());
+  const hasInitialIntent = !!(initialIntent.area || initialIntent.state || initialIntent.panelArea);
   const [leads, setLeads]                 = useState([]);
-  const [slowIntro, setSlowIntro]         = useState(false);
-  const [autoOpenPanel, setAutoOpenPanel] = useState(false);
-  const [zoomMode, setZoomMode]           = useState("area");
-  const [panelArea, setPanelArea]         = useState("");
-  const [jumpArea, setJumpArea]           = useState("");
-  const [jumpState, setJumpState]         = useState("");
-  const [jumpToken, setJumpToken]         = useState(0);
+  const [slowIntro, setSlowIntro]         = useState(hasInitialIntent ? initialIntent.intro : false);
+  const [autoOpenPanel, setAutoOpenPanel] = useState(hasInitialIntent ? initialIntent.openPanel : false);
+  const [zoomMode, setZoomMode]           = useState(hasInitialIntent ? initialIntent.zoom : "area");
+  const [panelArea, setPanelArea]         = useState(hasInitialIntent ? initialIntent.panelArea || "" : "");
+  const [jumpArea, setJumpArea]           = useState(hasInitialIntent && initialIntent.zoom === "area" ? initialIntent.area || "" : "");
+  const [jumpState, setJumpState]         = useState(hasInitialIntent ? initialIntent.state || "" : "");
+  const [jumpToken, setJumpToken]         = useState(hasInitialIntent ? 1 : 0);
   const [stats, setStats]                 = useState({ available: 0, taken: 0 });
-  const [selectedGroup, setSelectedGroup] = useState("");
-  const [selectedArea, setSelectedArea]   = useState("");
+  const [selectedGroup, setSelectedGroup] = useState(hasInitialIntent ? initialIntent.group || "" : "");
+  const [selectedArea, setSelectedArea]   = useState(hasInitialIntent ? initialIntent.panelArea || initialIntent.area || "" : "");
   const [statusListFilter, setStatusListFilter] = useState(null);
-  const [stateRegionFilter, setStateRegionFilter] = useState("");
-  const [theme, setTheme]                 = useState("dark");
+  const [stateRegionFilter, setStateRegionFilter] = useState(
+    hasInitialIntent && initialIntent.statePanel ? initialIntent.state || "" : "",
+  );
+  const [theme, toggleTheme]              = useTheme();
   const mapRef                            = useRef(null);
-
-  useLayoutEffect(() => {
-    const intent = parseAuMapUrl(window.location.search);
-    if (!intent.area && !intent.state && !intent.panelArea) return;
-    setSlowIntro(intent.intro);
-    setAutoOpenPanel(intent.openPanel);
-    setZoomMode(intent.zoom || "area");
-    setPanelArea(intent.panelArea || "");
-    setJumpState(intent.state || "");
-    setJumpArea(intent.zoom === "area" ? (intent.area || "") : "");
-    if (intent.panelArea) setSelectedArea(intent.panelArea);
-    else if (intent.area) setSelectedArea(intent.area);
-    if (intent.group) setSelectedGroup(intent.group);
-    if (intent.statePanel && intent.state) setStateRegionFilter(intent.state);
-    setJumpToken((t) => t + 1);
-  }, []);
-
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") || "dark";
-    setTheme(stored);
-    document.documentElement.setAttribute("data-theme", stored);
-  }, []);
-
-  const toggleTheme = () => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", next);
-      document.documentElement.setAttribute("data-theme", next);
-      return next;
-    });
-  };
 
   const onMapReady    = useCallback((map) => { mapRef.current = map; }, []);
   const onStatsChange = useCallback((s) => setStats({ available: s.available, taken: s.taken }), []);

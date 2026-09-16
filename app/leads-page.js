@@ -13,6 +13,7 @@ import { NZ_AREAS, getAreaGroupsForRegion } from "@/lib/nz-areas";
 import { getMapConfig } from "@/lib/map-config";
 import { getGoogleRatingColor, formatGoogleRating } from "@/lib/lead-display";
 import { getLeadArea, getMapUrlForLead } from "@/lib/lead-utils";
+import { useTheme } from "@/lib/use-theme";
 
 
 function SunIcon() {
@@ -102,24 +103,6 @@ function useIsMobile() {
     return () => window.removeEventListener("resize", fn);
   }, []);
   return v;
-}
-
-function useTheme() {
-  const [theme, setTheme] = useState("dark");
-  useEffect(() => {
-    const stored = localStorage.getItem("theme") || "dark";
-    setTheme(stored);
-    document.documentElement.setAttribute("data-theme", stored);
-  }, []);
-  const toggleTheme = useCallback(() => {
-    setTheme((prev) => {
-      const next = prev === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", next);
-      document.documentElement.setAttribute("data-theme", next);
-      return next;
-    });
-  }, []);
-  return [theme, toggleTheme];
 }
 
 // ── Score info tooltip ────────────────────────────────────────────────────────
