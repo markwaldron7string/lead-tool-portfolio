@@ -192,11 +192,7 @@ export default function ScrapePanel({
   const [maxResults, setMaxResults] = useState(60);
   const [allCities, setAllCities] = useState(false);
   const [open, setOpen] = useState(defaultOpen);
-
-  // Collapse panel when bulk enrichment starts
-  useEffect(() => {
-    if (disabled) setOpen(false);
-  }, [disabled]);
+  const isOpen = open && !disabled;
 
   // Progress / result state
   const [scraping, setScraping] = useState(false);
@@ -241,15 +237,11 @@ export default function ScrapePanel({
       : isAU
         ? filteredAUCities
         : (template?.cities || NZ_AREA_NAMES);
-  const activeCity = isCustom ? customCity : templateCity;
+  const validTemplateCity = isAU && !isCustom && !filteredAUCities.includes(templateCity)
+    ? filteredAUCities[0] || ""
+    : templateCity;
+  const activeCity = isCustom ? customCity : validTemplateCity;
   const isRunning = scraping || allTermsRunning;
-
-  // Keep selected area valid when state filter changes
-  useEffect(() => {
-    if (!isAU || isCustom) return;
-    if (templateCity && filteredAUCities.includes(templateCity)) return;
-    if (filteredAUCities[0]) setTemplateCity(filteredAUCities[0]);
-  }, [isAU, isCustom, scrapeState, filteredAUCities, templateCity]);
 
   function handleTemplateChange(key) {
     if (TEMPLATE_ROUTES[key] && key !== country) {
@@ -435,7 +427,7 @@ export default function ScrapePanel({
           justifyContent: "space-between",
           padding: "13px 18px",
           cursor: isRunning || disabled ? "default" : "pointer",
-          borderBottom: open ? "1px solid var(--border)" : "none",
+          borderBottom: isOpen ? "1px solid var(--border)" : "none",
           opacity: disabled ? 0.4 : 1,
           transition: "opacity 0.2s ease",
         }}
@@ -471,12 +463,12 @@ export default function ScrapePanel({
             </span>
           )}
           {!isRunning && !disabled && (
-            <span style={{ color: "var(--muted)", fontSize: 16 }}>{open ? "−" : "+"}</span>
+            <span style={{ color: "var(--muted)", fontSize: 16 }}>{isOpen ? "−" : "+"}</span>
           )}
         </div>
       </div>
 
-      {open && (
+      {isOpen && (
         <div style={{ padding: "16px 18px" }}>
 
           {/* ── Country selector ── */}
@@ -571,7 +563,7 @@ export default function ScrapePanel({
                   </select>
                 ) : isAU ? (
                   <select
-                    value={templateCity}
+                    value={validTemplateCity}
                     onChange={(e) => setTemplateCity(e.target.value)}
                     disabled={isRunning}
                     style={{ width: "100%" }}

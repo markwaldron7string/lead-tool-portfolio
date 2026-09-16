@@ -933,7 +933,7 @@ export default function CoverageMap({
   const [loading, setLoading]           = useState(true);
   const [takenAreas, setTakenAreas]     = useState([]);
   const [takenLeads, setTakenLeads]     = useState([]);
-  const [selectedArea, setSelectedArea] = useState(null);
+  const [selectedAreaName, setSelectedAreaName] = useState(null);
   const [tooltipInfo, setTooltipInfo]   = useState(null);
   const [tooltipPos, setTooltipPos]     = useState(null);
   const [toast, setToast]               = useState(null);
@@ -941,6 +941,7 @@ export default function CoverageMap({
   const [aggregateClosing, setAggregateClosing] = useState(false);
   const [stateRegionClosing, setStateRegionClosing] = useState(false);
   const [modalLead, setModalLead]        = useState(null);
+  const [previousStatusListFilter, setPreviousStatusListFilter] = useState(statusListFilter);
   const geoJsonRef                      = useRef(null);
   const layersByCodeRef                 = useRef(new Map());
   const [viewPhase, setViewPhase]       = useState("overview");
@@ -949,18 +950,27 @@ export default function CoverageMap({
   const hoveredLayerRef                 = useRef(null);
   const sa4InfoMapRef                   = useRef({});
   const styleForLayerRef                = useRef(() => ({}));
+  const applyRegionStylesRef            = useRef(() => {});
   const selectedCodesRef                = useRef(null);
   const selectedAreaRef                 = useRef(null);
   const highlightAreaRef                = useRef(null);
+  const [highlightArea, setHighlightArea] = useState(null);
   const viewPhaseRef                    = useRef("overview");
   const expectedLayerCountRef           = useRef(0);
   const pendingLeadMarksRef             = useRef(new Map());
+
+  if (statusListFilter !== previousStatusListFilter) {
+    setPreviousStatusListFilter(statusListFilter);
+    if (statusListFilter) {
+      setPanelClosing(false);
+      setSelectedAreaName(null);
+      setHighlightArea(null);
+    }
+  }
   const targetArea = panelArea || jumpArea || "";
   const areaForPanel = panelArea || jumpArea;
   const panelOpenedForRef                     = useRef("");
   const zoomAndOpenPanelRef                   = useRef(null);
-  const targetAreaRef                         = useRef(targetArea);
-  targetAreaRef.current = targetArea;
   const stableOnMapReady                      = useCallback((map) => {
     mapInstanceRef.current = map;
     onMapReady?.(map);
@@ -969,7 +979,8 @@ export default function CoverageMap({
     setPanelClosing(true);
     setTimeout(() => {
       setPanelClosing(false);
-      setSelectedArea(null);
+      setSelectedAreaName(null);
+      setHighlightArea(null);
       highlightAreaRef.current = null;
       if (stateRegionFilter) {
         viewPhaseRef.current = "state_focused";
@@ -1102,6 +1113,15 @@ export default function CoverageMap({
     return map;
   }, [areaMapping, areaLeadMap, takenAreas, takenLeads]);
 
+  const selectedArea = useMemo(() => {
+    if (!selectedAreaName || !areaMapping) return null;
+    const codes = areaMapping[selectedAreaName];
+    const info = codes
+      ?.map((code) => sa4InfoMap[areaCodeKey(code)])
+      .find((item) => item?.areaName === selectedAreaName);
+    return info ?? { areaName: selectedAreaName, status: "noLeads", count: 0, best: null };
+  }, [selectedAreaName, areaMapping, sa4InfoMap]);
+
   // ── Legend stats → parent ────────────────────────────────────────────────
   const legendStats = useMemo(() => {
     let available = 0, taken = 0, noLeads = 0;
@@ -1119,29 +1139,7 @@ export default function CoverageMap({
 
   useEffect(() => { sa4InfoMapRef.current = sa4InfoMap; }, [sa4InfoMap]);
   useEffect(() => { selectedAreaRef.current = selectedArea; }, [selectedArea]);
-  useEffect(() => {
-    stateAreaCodesRef.current = stateAreaCodes;
-    if (stateAreaCodes?.size) requestAnimationFrame(() => applyRegionStylesRef.current?.());
-  }, [stateAreaCodes]);
-
-  useEffect(() => {
-    if (!statusListFilter) return;
-    setPanelClosing(false);
-    setSelectedArea(null);
-    highlightAreaRef.current = null;
-  }, [statusListFilter]);
-
-  // Keep open panel in sync when leads are marked complete/available
-  useEffect(() => {
-    if (!selectedArea?.areaName || !areaMapping) return;
-    const codes = areaMapping[selectedArea.areaName];
-    if (!codes?.length) return;
-    const info = codes.map((c) => sa4InfoMap[areaCodeKey(c)]).find((i) => i?.areaName === selectedArea.areaName);
-    if (!info) return;
-    if (info.count !== selectedArea.count || info.status !== selectedArea.status) {
-      setSelectedArea({ ...info });
-    }
-  }, [sa4InfoMap, areaMapping, selectedArea?.areaName, selectedArea?.count, selectedArea?.status]);
+  useEffect(() => { stateAreaCodesRef.current = stateAreaCodes; }, [stateAreaCodes]);
 
   useEffect(() => {
     panelOpenedForRef.current = "";
@@ -1150,7 +1148,10 @@ export default function CoverageMap({
   const onPhaseChange = useCallback((phase, areaName) => {
     viewPhaseRef.current = phase;
     setViewPhase(phase);
-    if (areaName) highlightAreaRef.current = areaName;
+    if (areaName) {
+      highlightAreaRef.current = areaName;
+      setHighlightArea(areaName);
+    }
   }, []);
 
   const openPanelForArea = useCallback((areaName) => {
@@ -1159,11 +1160,11 @@ export default function CoverageMap({
     if (!codes?.length) return;
     const info = codes.map((c) => sa4InfoMap[areaCodeKey(c)]).find((i) => i?.areaName === areaName)
       ?? { areaName, status: "noLeads", count: 0, best: null };
-    panelOpenedForRef.current = targetAreaRef.current;
+    panelOpenedForRef.current = targetArea;
     setPanelClosing(false);
     onStatusListClose?.();
-    setSelectedArea({ ...info });
-  }, [areaMapping, sa4InfoMap, onStatusListClose]);
+    setSelectedAreaName(info.areaName);
+  }, [areaMapping, sa4InfoMap, onStatusListClose, targetArea]);
 
   const zoomAndOpenPanel = useCallback((areaName, info) => {
     const map = mapInstanceRef.current;
@@ -1174,6 +1175,7 @@ export default function CoverageMap({
     const displayInfo = info ?? { areaName, status: "noLeads", count: 0, best: null };
 
     highlightAreaRef.current = areaName;
+    setHighlightArea(areaName);
     viewPhaseRef.current = "zooming";
     setViewPhase("zooming");
 
@@ -1204,7 +1206,7 @@ export default function CoverageMap({
       setViewPhase("focused");
       setPanelClosing(false);
       onStatusListClose?.();
-      setSelectedArea({ ...displayInfo });
+      setSelectedAreaName(displayInfo.areaName);
     };
 
     if (zoomBounds?.isValid()) {
@@ -1213,7 +1215,7 @@ export default function CoverageMap({
       openPanel();
     }
   }, [areaMapping, geojson, mapConfig, onStatusListClose]);
-  zoomAndOpenPanelRef.current = zoomAndOpenPanel;
+  useEffect(() => { zoomAndOpenPanelRef.current = zoomAndOpenPanel; }, [zoomAndOpenPanel]);
 
   const onJumpComplete = useCallback(() => {
     if (autoOpenPanel && areaForPanel) openPanelForArea(areaForPanel);
@@ -1223,10 +1225,10 @@ export default function CoverageMap({
     () => geojson?.features?.filter((f) => f.geometry).length ?? 0,
     [geojson],
   );
-  expectedLayerCountRef.current = expectedLayerCount;
+  useEffect(() => { expectedLayerCountRef.current = expectedLayerCount; }, [expectedLayerCount]);
 
   const highlightAreaName = selectedArea?.areaName
-    || (viewPhase === "focused" || viewPhase === "zooming" ? (highlightAreaRef.current || targetArea) : null)
+    || (viewPhase === "focused" || viewPhase === "zooming" ? (highlightArea || targetArea) : null)
     || null;
 
   useEffect(() => { highlightAreaRef.current = highlightAreaName; }, [highlightAreaName]);
@@ -1237,7 +1239,7 @@ export default function CoverageMap({
     const codes = areaMapping[highlightAreaName];
     return codes?.length ? new Set(codes.map(areaCodeKey)) : null;
   }, [highlightAreaName, areaMapping]);
-  selectedCodesRef.current = selectedCodes;
+  useEffect(() => { selectedCodesRef.current = selectedCodes; }, [selectedCodes]);
 
   const styleForLayer = useCallback((code, info, { hover = false } = {}) => {
     const key = areaCodeKey(code);
@@ -1353,17 +1355,11 @@ export default function CoverageMap({
 
   useEffect(() => { styleForLayerRef.current = styleForLayer; }, [styleForLayer]);
 
-  // Keep hover tooltip counts in sync when leads are marked complete
-  useEffect(() => {
-    if (!tooltipInfo?.sa4Code) return;
+  const currentTooltipInfo = useMemo(() => {
+    if (!tooltipInfo?.sa4Code) return tooltipInfo;
     const info = sa4InfoMap[areaCodeKey(tooltipInfo.sa4Code)];
-    if (!info) return;
-    if (info.count !== tooltipInfo.count || info.status !== tooltipInfo.status) {
-      setTooltipInfo({ ...info, sa4Code: tooltipInfo.sa4Code });
-    }
-  }, [sa4InfoMap, tooltipInfo?.sa4Code, tooltipInfo?.count, tooltipInfo?.status]);
-
-  const applyRegionStylesRef = useRef(() => {});
+    return info ? { ...info, sa4Code: tooltipInfo.sa4Code } : tooltipInfo;
+  }, [sa4InfoMap, tooltipInfo]);
 
   const applyRegionStyles = useCallback(() => {
     if (!layersByCodeRef.current.size) return;
@@ -1374,7 +1370,11 @@ export default function CoverageMap({
     }
   }, [sa4InfoMap, styleForLayer, selectedCodes]);
 
-  applyRegionStylesRef.current = applyRegionStyles;
+  useEffect(() => { applyRegionStylesRef.current = applyRegionStyles; }, [applyRegionStyles]);
+
+  useEffect(() => {
+    if (stateAreaCodes?.size) requestAnimationFrame(() => applyRegionStylesRef.current?.());
+  }, [stateAreaCodes]);
 
   useEffect(() => {
     applyRegionStyles();
@@ -1405,9 +1405,9 @@ export default function CoverageMap({
   const onPhaseChangeRef = useRef(onPhaseChange);
   const onJumpCompleteRef = useRef(onJumpComplete);
   const onAfterFlashRef = useRef(onAfterFlash);
-  onPhaseChangeRef.current = onPhaseChange;
-  onJumpCompleteRef.current = onJumpComplete;
-  onAfterFlashRef.current = onAfterFlash;
+  useEffect(() => { onPhaseChangeRef.current = onPhaseChange; }, [onPhaseChange]);
+  useEffect(() => { onJumpCompleteRef.current = onJumpComplete; }, [onJumpComplete]);
+  useEffect(() => { onAfterFlashRef.current = onAfterFlash; }, [onAfterFlash]);
 
   // ── Hover / click handlers (use refs so counts stay live after mark complete) ─
   const onEachFeature = useCallback((feature, layer) => {
@@ -1457,17 +1457,12 @@ export default function CoverageMap({
         zoomAndOpenPanelRef.current?.(info.areaName, info);
       },
     });
-  }, [mapConfig.codeProp, mapConfig.nameProp, onStatusListClose]);
+  }, [mapConfig.codeProp, mapConfig.nameProp]);
 
   // ── Mark area ────────────────────────────────────────────────────────────
   const handleMark = useCallback(async (areaName, markTaken) => {
     setTakenAreas((prev) =>
       markTaken ? (prev.includes(areaName) ? prev : [...prev, areaName]) : prev.filter((a) => a !== areaName)
-    );
-    setSelectedArea((prev) =>
-      prev?.areaName === areaName
-        ? { ...prev, status: markTaken ? "taken" : (prev.count > 0 ? "available" : "noLeads"), count: markTaken ? 0 : prev.count }
-        : prev
     );
     setToast(markTaken ? `✓ ${areaName} marked complete` : `${areaName} marked available`);
     setTimeout(() => setToast(null), 3000);
@@ -1613,7 +1608,7 @@ export default function CoverageMap({
         />
       )}
 
-      <HoverTooltip info={tooltipInfo} pos={tooltipPos} TK={TK} />
+      <HoverTooltip info={currentTooltipInfo} pos={tooltipPos} TK={TK} />
       <SlidePanel
         info={selectedArea}
         closing={panelClosing}
@@ -1622,7 +1617,7 @@ export default function CoverageMap({
         onClose={closePanel}
         onMark={handleMark}
         onMarkLead={handleMarkLead}
-        onViewLeads={(areaName) => { setSelectedArea(null); onAreaClick?.(areaName); }}
+        onViewLeads={(areaName) => { setSelectedAreaName(null); onAreaClick?.(areaName); }}
         onLeadClick={setModalLead}
         TK={TK}
       />
